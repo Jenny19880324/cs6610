@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/jingli/Documents/UUcourse/cs6610/Project1/src/main.cpp
+stdio.h
+-
+stdlib.h
+-
+time.h
+-
+iostream
+-
+OpenGL/gl.h
+-
+GLUT/glut.h
+-
+
