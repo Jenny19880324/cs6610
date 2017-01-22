@@ -17,6 +17,10 @@ iostream
 -
 OpenGL/gl.h
 -
+GL/gl.h
+-
 GLUT/glut.h
+-
+GL/glut
 -
 
