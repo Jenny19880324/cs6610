@@ -17,8 +17,13 @@
 #endif
 
 void onDisplay(){
+    static unsigned cnt = 0;
     glClear(GL_COLOR_BUFFER_BIT);
-    glClearColor((double)rand()/RAND_MAX,(double)rand()/RAND_MAX,(double)rand()/RAND_MAX,1.0f);
+    if(cnt >= 30){
+        glClearColor((double)rand()/RAND_MAX,(double)rand()/RAND_MAX,(double)rand()/RAND_MAX,1.0f);
+        cnt = 0;
+    }
+    cnt++;
     glutSwapBuffers();
 }
 
@@ -29,9 +34,8 @@ void onKeyboard(unsigned char key, int x, int y){
 }
 
 
-void timeout(int value){
+void onIdle(){
     glutPostRedisplay();
-	glutTimerFunc(1000, timeout, 0);
 }
 
 int main(int argc, char *argv[]){
@@ -45,6 +49,6 @@ int main(int argc, char *argv[]){
 
     glutDisplayFunc(onDisplay);
     glutKeyboardFunc(onKeyboard);
-	glutTimerFunc(1000, timeout, 0);
+    glutIdleFunc(onIdle);
     glutMainLoop();
 }
