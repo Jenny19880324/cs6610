@@ -6,7 +6,6 @@
 
 #ifdef __APPLE__
 #include <OpenGL/gl3.h>
-#define __gl_h_
 #include <OpenGL/gl3ext.h>
 #else
 #include <windows.h>
@@ -20,6 +19,7 @@
 #endif
 
 #include "cyTriMesh.h"
+#include "cyGL.h"
 
 using namespace std;
 using namespace cy;
@@ -89,13 +89,17 @@ int main(int argc, char *argv[]){
     unsigned screen_width = 800;
     unsigned screen_height = 600;
     glutInitWindowSize(screen_width, screen_height);
-
-   glutCreateWindow("Project 1 of CS6610");
+    glutCreateWindow("Project 1 of CS6610");
 
     //Generate and bind a vertex array object
    GLboolean isVAO;
    const GLubyte *strExt;
+   const GLubyte *strVersion;
+   float myGLVersion;
    strExt = glGetString (GL_EXTENSIONS);
+   strVersion = glGetString(GL_VERSION);
+   sscanf((char *)strVersion, "%f", &myGLVersion);
+   cout << "myGLVersion = " << myGLVersion << endl;
    isVAO = gluCheckExtension((const GLubyte*)"GL_APPLE_vertex_array_object", strExt);
     if(!isVAO){
         cerr << "isVAO false" << endl;
@@ -106,6 +110,20 @@ int main(int argc, char *argv[]){
     glGenVertexArrays(1, &m_VAO);
     glBindVertexArray(m_VAO);
     glBindVertexArray(0);
+
+    //glsl shader
+    GLSLProgram *prog = new GLSLProgram();
+    glBindAttribLocation(prog->GetID(), 0, "pos");
+    bool isLinked = prog->BuildFiles("../glsl/vert.txt", "../glsl/frag.txt");
+    cout << "isLinked = " << isLinked << endl;
+    prog->RegisterUniform(0, "modelViewProjection");
+    prog->Bind();
+    const float modelViewProjection[16] = {
+        0.05,    0.0,    0.0,    0.0,
+        0.0,    0.05,    0.0,    0.0,
+        0.0,    0.0,    0.05,    0.0,
+        0.0,    0.0,    0.0,    1.0};
+    prog->SetUniformMatrix4(0, modelViewProjection);
 
     glutDisplayFunc(onDisplay);
     glutKeyboardFunc(onKeyboard);
