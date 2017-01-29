@@ -183,7 +183,7 @@ int main(int argc, char *argv[]){
 //    cout << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << endl;
 
    glutInitWindowSize(g_screen_width, g_screen_height);
-    glutCreateWindow("Project 1 of CS6610");
+    glutCreateWindow("Project 2 of CS6610");
 
     //Generate and bind a vertex array object
    GLboolean isVAO;
