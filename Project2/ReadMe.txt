@@ -24,6 +24,7 @@ Windows10
 2. make a build foder in Project2, cd to the build folder and type cmake .. -G "Visual Studio 14 Win64"
 3. Open Transformations.sln in the build folder using VS2015
 4. Set Transformations as start project
+5. In project properties -> Debugging set Command Arguments to "../obj/teapot.obj"
 5. Build Transformations
 6. run Transformations from VS
 
