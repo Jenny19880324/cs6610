@@ -21,7 +21,7 @@ endif(NOT OPENGL_FOUND)
 if (MSVC)
     set(FREEGLUT_DIR "C:\\Users\\Lijin\\Downloads\\freeglut-MSVC-3.0.0-2.mp\\freeglut\\")
     set(FREEGLUT_INCLUDE_DIR "${FREEGLUT_DIR}\\include")
-    set(FREEGLUT_DLL "{FREEGLUT_DIR}\\bin\\x64\\freeglut.dll")
+    set(FREEGLUT_DLL "${FREEGLUT_DIR}/bin/x64/freeglut.dll")
     set(FREEGLUT_LIB_DIR "${FREEGLUT_DIR}\\lib\\x64")
     include_directories(${FREEGLUT_INCLUDE_DIR})
     link_directories(${FREEGLUT_LIB_DIR})
@@ -63,8 +63,8 @@ target_link_libraries(${PROJ} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${GLEW_LIB})
 
 #COPY DLL to exe folder
 if (MSVC)
-    add_custom_command(TARGET ${PROJ} POST_BUILD
+    add_custom_command(TARGET Transformations POST_BUILD
 	    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	    "${FREEGLUT_DLL}"
-	    $<TARGET_FILE_DIR:${PROJ}>)
-#endif (MSVC)
+	    ${FREEGLUT_DLL} ${GLEW_DLL}
+	    $<TARGET_FILE_DIR:Transformations>)
+endif (MSVC)
