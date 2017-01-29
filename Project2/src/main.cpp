@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <math.h>
-#include <limits>
+#include <float.h>
 #include <stdlib.h>
 #include <time.h>
 #include <iostream>
@@ -11,6 +11,7 @@
 #include <OpenGL/gl3ext.h>
 #else
 #include <windows.h>
+#include <GL/glew.h>
 #include <GL/gl.h>
 #endif
 
@@ -37,8 +38,8 @@ GLSLProgram *g_program;
 unsigned g_screen_width = 800;
 unsigned g_screen_height = 600;
 //Bounding Box
-Point3f g_minV(numeric_limits<float>::max(),numeric_limits<float>::max(),numeric_limits<float>::max());
-Point3f g_maxV(numeric_limits<float>::min(),numeric_limits<float>::min(),numeric_limits<float>::min());
+Point3f g_minV(FLT_MAX, FLT_MAX, FLT_MAX);
+Point3f g_maxV(FLT_MIN, FLT_MIN, FLT_MIN);
 Point3f g_centerV(0, 0, 0);
 Point3f g; // gaze direction
 Point3f t = Point3f(0.0, 1.0, 0.0); // view up direction
@@ -168,21 +169,11 @@ int main(int argc, char *argv[]){
     dist = (g_maxV - g_minV).z * 2;
     g = -g_centerV;
 
-    cout << "dist = " << dist << endl;
-    cout << "g = (" << g.x << ", " << g.y << ", " << g.z << ")" << endl;
-
     srand(time(NULL));
     glutInit(&argc, argv);
-    //generate and bind a vertex array object
-//    GLenum err = glewInit();
-//    if(GLEW_OK != err){
-        /* Problem: glewInit failed, something is seriously wrong */
-//        cerr << "Error: " << glewGetErrorString(err) << endl;
-//        return 1;
-//    }
-//    cout << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << endl;
 
-   glutInitWindowSize(g_screen_width, g_screen_height);
+
+    glutInitWindowSize(g_screen_width, g_screen_height);
     glutCreateWindow("Project 1 of CS6610");
 
     //Generate and bind a vertex array object
@@ -194,11 +185,26 @@ int main(int argc, char *argv[]){
    strVersion = glGetString(GL_VERSION);
    sscanf((char *)strVersion, "%f", &myGLVersion);
    cout << "myGLVersion = " << myGLVersion << endl;
+
+#ifdef __APPLE__
    isVAO = gluCheckExtension((const GLubyte*)"GL_APPLE_vertex_array_object", strExt);
     if(!isVAO){
         cerr << "isVAO false" << endl;
         return 1;
     }
+#endif
+
+#ifdef _WIN64
+	//generate and bind a vertex array object
+	GLenum err = glewInit();
+	if (GLEW_OK != err) {
+		/* Problem: glewInit failed, something is seriously wrong */
+		cerr << "Error: " << glewGetErrorString(err) << endl;
+		return 1;
+	}
+	cout << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << endl;
+#endif
+
     GLuint m_VAO;
     GLuint vertexBuffer;
     glGenVertexArrays(1, &m_VAO);

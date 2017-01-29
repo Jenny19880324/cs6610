@@ -19,12 +19,12 @@ endif(NOT OPENGL_FOUND)
 
 #Find FREEGLUT
 if (MSVC)
-    set(GLUT_INCLUDE_DIR ./dependencies/freeglut/include)
-    set(GLUT_glut_LIBRARY ./dependencies/freeglut/lib/x64)
-    set(GLUT_DLL_DIR ./dependencies/freeglut/bin/x64)
-    set(GLUT_LIBRARY freeglut)
-    include_directories(${GLUT_INCLUDE_DIR})
-    link_directories(${GLUT_glut_LIBRARY})
+    set(FREEGLUT_DIR "C:\\Users\\Lijin\\Downloads\\freeglut-MSVC-3.0.0-2.mp\\freeglut\\")
+    set(FREEGLUT_INCLUDE_DIR "${FREEGLUT_DIR}\\include")
+    set(FREEGLUT_DLL "{FREEGLUT_DIR}\\bin\\x64\\freeglut.dll")
+    set(FREEGLUT_LIB_DIR "${FREEGLUT_DIR}\\lib\\x64")
+    include_directories(${FREEGLUT_INCLUDE_DIR})
+    link_directories(${FREEGLUT_LIB_DIR})
 #Find GLUT
 elseif (APPLE)
     find_package(GLUT REQUIRED)
@@ -35,6 +35,15 @@ elseif (APPLE)
         message(ERROR "GLUT not found!")
     endif(NOT GLUT_FOUND)
 endif (MSVC)
+
+#Find GLEW
+set(GLEW_DIR "C:\\Users\\Lijin\\Downloads\\glew-2.0.0-win32\\glew-2.0.0\\")
+set(GLEW_INCLUDE_DIR "${GLEW_DIR}\\include")
+set(GLEW_DLL "${GLEW_DIR}\\bin\\Release\\x64\\glew32.dll")
+set(GLEW_LIB_DIR "${GLEW_DIR}\\lib\\Release\\x64")
+set(GLEW_LIB "glew32.lib")
+include_directories(${GLEW_INCLUDE_DIR})
+link_directories(${GLEW_LIB_DIR})
 
 #to use the cyTriMesh code release for parsing the obj file
 include_directories(${CY_INCLUDE_DIR})
@@ -50,12 +59,12 @@ add_executable(${PROJ}
     ${SRCS})
 
 #LINKING
-target_link_libraries(${PROJ} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY})
+target_link_libraries(${PROJ} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${GLEW_LIB})
 
 #COPY DLL to exe folder
 if (MSVC)
     add_custom_command(TARGET ${PROJ} POST_BUILD
 	    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	    "${PROJECT_SOURCE_DIR}/${GLUT_DLL_DIR}/freeglut.dll"
-	    $<TARGET_FILE_DIR:helloWorld>)
-endif (MSVC)
+	    "${FREEGLUT_DLL}"
+	    $<TARGET_FILE_DIR:${PROJ}>)
+#endif (MSVC)
