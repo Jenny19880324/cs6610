@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <math.h>
-#include <limits>
 #include <stdlib.h>
 #include <time.h>
 #include <iostream>
@@ -34,41 +33,17 @@ using namespace cy;
 ////////////////////////////////////////////////////////////////////////////////
 TriMesh *g_mesh;
 GLSLProgram *g_program;
+float g_rot1 = 0.0, g_rot2 = 0.0;
+float g_trans = 0.0;
 unsigned g_screen_width = 800;
 unsigned g_screen_height = 600;
-//Bounding Box
-Point3f g_minV(numeric_limits<float>::max(),numeric_limits<float>::max(),numeric_limits<float>::max());
-Point3f g_maxV(numeric_limits<float>::min(),numeric_limits<float>::min(),numeric_limits<float>::min());
-Point3f g_centerV(0, 0, 0);
-Point3f g; // gaze direction
-Point3f t = Point3f(0.0, 1.0, 0.0); // view up direction
-float dist;
-//mouse operation
-Point2f g_dist_record_coord;
-Point2f g_angle_record_coord;
-bool g_dist_record = false;
-bool g_angle_record = false;
 
 ////////////////////////////////////////////////////////////////////////////////
 void onDisplay(){
     glClear(GL_COLOR_BUFFER_BIT);
     glClearColor(0.0f, 0.0f, 0.0f ,1.0f);
 
-    //transformation
-    Point3f w = -g / g.Length();
-    Point3f u = t.Cross(w) / (t.Cross(w)).Length();
-    Point3f v = w.Cross(u);
-    Point3f e(0.0, 0.0, -dist);
-
-    Matrix4<float> view,projection, modelViewProjection;
-    view.Set(u, v, w, e);
-    float aspect = (float)g_screen_width/(float)g_screen_height;
-    projection.SetPerspective(PI/3, aspect, 20, -20);
-    modelViewProjection = projection * view;
-
-    g_program->SetUniformMatrix4(0, modelViewProjection.data);
-
-    //Generate a vertex buffer and set its data using the vertices read from .obj file
+     //Generate a vertex buffer and set its data using the vertices read from .obj file
     GLuint VBO;
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -81,40 +56,63 @@ void onDisplay(){
     glutSwapBuffers();
 }
 
-void onMotion(int x, int y){
-    if(g_angle_record){
-        g.x = (x - g_angle_record_coord.x) * 0.1;
-        g.y = (y - g_angle_record_coord.y) * 0.1;
-    }
-    if(g_dist_record){
-        dist = y - g_dist_record_coord.y;
-    }
-}
-
 void onMouse(int button, int state, int x, int y){
+    float dist = -50.0;
+    static Point2f dist_record_coord;
+    static Point2f angle_record_coord;
+    static bool dist_record = false;
+    static bool angle_record = false;
+    Point3f g = Point3f(0.0, 0.0, -1.0); // gaze direction
+    Point3f t = Point3f(0.0, 1.0, 0.0); // view up direction
+
     if(button == GLUT_LEFT_BUTTON){
         if(state == GLUT_DOWN){
-            if(!g_angle_record){
-                g_angle_record_coord = Point2f(x, y);
-                g_angle_record = true;
+            if(!angle_record){
+                angle_record_coord = Point2f(x, y);
+                cout << "x = " << x << ",y =" << y << endl;
+                angle_record = true;
             }
         }
         else{
-           g_angle_record = false;
+           angle_record = false;
         }
+        g.x = x - angle_record_coord.x;
+        g.y = y - angle_record_coord.y;
+
     }
     else if(button == GLUT_RIGHT_BUTTON){
         if(state == GLUT_DOWN){
-            if(!g_dist_record){
-                g_dist_record_coord = Point2f(x,y);
-                g_dist_record = true;
+            if(!dist_record){
+                dist_record_coord = Point2f(x,y);
+                cout << "x = " << x << ",y =" << y << endl;
+                dist_record = true;
             }
         }
         else{
-            g_dist_record = false;
+            cout << "dist = " << dist << endl;
+            dist_record = false;
         }
+        dist = (Point2f(x,y) - dist_record_coord).Length();
+
     }
-   glutPostRedisplay();
+    //transformations
+    Point3f w = -g / g.Length();
+    Point3f u = t.Cross(w) / (t.Cross(w)).Length();
+    Point3f v = w.Cross(u);
+    Point3f e(0.0, 0.0, -dist);
+
+    Matrix4<float> view,projection, modelViewProjection, rotation, scale, translation;
+    view.Set(u, v, w, e);
+    float aspect = (float)g_screen_width/(float)g_screen_height;
+    projection.SetPerspective(PI/3, aspect, 20, -20);
+    modelViewProjection = projection * view;
+
+
+    cout << modelViewProjection.data[0] << ", " << modelViewProjection.data[4] << ", " << modelViewProjection.data[8] << ", " << modelViewProjection.data[12] << endl;
+    cout << modelViewProjection.data[1] << ", " << modelViewProjection.data[5] << ", " << modelViewProjection.data[9] << ", " << modelViewProjection.data[13] << endl;
+    cout << modelViewProjection.data[2] << ", " << modelViewProjection.data[6] << ", " << modelViewProjection.data[10] << ", " << modelViewProjection.data[14] << endl;
+    cout << modelViewProjection.data[3] << ", " << modelViewProjection.data[7] << ", " << modelViewProjection.data[11] << ", " << modelViewProjection.data[15] << endl;
+    g_program->SetUniformMatrix4(0, modelViewProjection.data);
 }
 
 void onKeyboard(unsigned char key, int x, int y){
@@ -123,17 +121,6 @@ void onKeyboard(unsigned char key, int x, int y){
     }
 }
 
-
-void onSpecial(int key, int x, int y){
-    if(key == GLUT_KEY_F6){
-        cout << "recompile the GLSL shaders" << endl;
-        g_program->BuildFiles("../glsl/vert.txt", "../glsl/frag.txt");
-    }
-}
-
-void onIdle(){
-    glutPostRedisplay();
-}
 
 void timeout(int value){
     glutPostRedisplay();
@@ -155,21 +142,6 @@ int main(int argc, char *argv[]){
     if(!g_mesh->LoadFromFileObj(obj_filename.c_str(), false)){
         cerr << "failure of loading the obj file" << endl;
     }
-    //center the object
-    for(unsigned i = 0; i < g_mesh->NV(); i++){
-        if(g_mesh->V(i).x < g_minV.x) g_minV.x = g_mesh->V(i).x;
-        if(g_mesh->V(i).y < g_minV.y) g_minV.y = g_mesh->V(i).y;
-        if(g_mesh->V(i).z < g_minV.z) g_minV.z = g_mesh->V(i).z;
-        if(g_mesh->V(i).x > g_maxV.x) g_maxV.x = g_mesh->V(i).x;
-        if(g_mesh->V(i).y > g_maxV.y) g_maxV.y = g_mesh->V(i).y;
-        if(g_mesh->V(i).z > g_maxV.z) g_maxV.z = g_mesh->V(i).z;
-    }
-    g_centerV = Point3f((g_minV + g_maxV) / 2);
-    dist = (g_maxV - g_minV).z * 2;
-    g = -g_centerV;
-
-    cout << "dist = " << dist << endl;
-    cout << "g = (" << g.x << ", " << g.y << ", " << g.z << ")" << endl;
 
     srand(time(NULL));
     glutInit(&argc, argv);
@@ -212,13 +184,9 @@ int main(int argc, char *argv[]){
     g_program->RegisterUniform(0, "modelViewProjection");
     g_program->Bind();
 
-
     glutDisplayFunc(onDisplay);
     glutKeyboardFunc(onKeyboard);
-    glutSpecialFunc(onSpecial);
     glutMouseFunc(onMouse);
-    glutMotionFunc(onMotion);
-	//glutTimerFunc(1000, timeout, 0);
-    glutIdleFunc(onIdle);
+	glutTimerFunc(1000, timeout, 0);
     glutMainLoop();
 }
