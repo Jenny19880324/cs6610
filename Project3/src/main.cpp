@@ -49,34 +49,41 @@ Point2f g_dist_record_coord;
 Point2f g_angle_record_coord;
 bool g_dist_record = false;
 bool g_angle_record = false;
+Matrix4<float> g_view_matrix;
+Matrix4<float> g_projection_matrix;
+Matrix4<float> g_model_view_projection_matrix;
 
 ////////////////////////////////////////////////////////////////////////////////
-void onDisplay(){
-    glClear(GL_COLOR_BUFFER_BIT);
-    glClearColor(0.0f, 0.0f, 0.0f ,1.0f);
-
+void setModelViewProjectionMatrix(){
     //transformation
     Point3f w = -g / g.Length();
     Point3f u = t.Cross(w) / (t.Cross(w)).Length();
     Point3f v = w.Cross(u);
     Point3f e(0.0, 0.0, -dist);
 
-    Matrix4<float> view,projection, modelViewProjection;
-    view.Set(u, v, w, e);
+    g_view_matrix.Set(u, v, w, e);
     float aspect = (float)g_screen_width/(float)g_screen_height;
-    projection.SetPerspective(PI/3, aspect, 20, -20);
-    modelViewProjection = projection * view;
+    g_projection_matrix.SetPerspective(PI/3, aspect, 20, -20);
+    g_model_view_projection_matrix = g_projection_matrix * g_view_matrix;
 
-    g_program->SetUniformMatrix4(0, modelViewProjection.data);
+    g_program->SetUniformMatrix4(0, g_model_view_projection_matrix.data);
+}
 
+void setupBuffers(){
     //Generate a vertex buffer and set its data using the vertices read from .obj file
-    GLuint VBO;
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    GLuint vertex_position_buffer;
+    glGenBuffers(1, &vertex_position_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(Point3f) * g_mesh->NV(), &g_mesh->V(0), GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    }
+
+void onDisplay(){
+    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(0.0f, 0.0f, 0.0f ,1.0f);
+
     glDrawArrays(GL_POINTS, 0, g_mesh->NV());
 
     glutSwapBuffers();
@@ -90,6 +97,8 @@ void onMotion(int x, int y){
     if(g_dist_record){
         dist = y - g_dist_record_coord.y;
     }
+    setModelViewProjectionMatrix();
+    glutPostRedisplay();
 }
 
 void onMouse(int button, int state, int x, int y){
@@ -115,7 +124,8 @@ void onMouse(int button, int state, int x, int y){
             g_dist_record = false;
         }
     }
-   glutPostRedisplay();
+    setModelViewProjectionMatrix();
+    glutPostRedisplay();
 }
 
 void onKeyboard(unsigned char key, int x, int y){
@@ -140,7 +150,6 @@ void timeout(int value){
     glutPostRedisplay();
 	glutTimerFunc(1000, timeout, 0);
 }
-
 int main(int argc, char *argv[]){
     //reading and parsing of the obj file
     string obj_filename;
@@ -171,8 +180,8 @@ int main(int argc, char *argv[]){
 
     srand(time(NULL));
     glutInit(&argc, argv);
-   glutInitWindowSize(g_screen_width, g_screen_height);
-    glutCreateWindow("Project 2 of CS6610");
+    glutInitWindowSize(g_screen_width, g_screen_height);
+    glutCreateWindow("Project 3 of CS6610");
 
     //Generate and bind a vertex array object
    GLboolean isVAO;
@@ -209,13 +218,15 @@ int main(int argc, char *argv[]){
     glBindVertexArray(m_VAO);
     glBindVertexArray(0);
 
+
     //glsl shader
     g_program = new GLSLProgram();
     glBindAttribLocation(g_program->GetID(), 0, "pos");
     g_program->BuildFiles("../glsl/vert.txt", "../glsl/frag.txt");
     g_program->RegisterUniform(0, "modelViewProjection");
     g_program->Bind();
-
+    setModelViewProjectionMatrix();
+    setupBuffers();
 
     glutDisplayFunc(onDisplay);
     glutKeyboardFunc(onKeyboard);

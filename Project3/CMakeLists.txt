@@ -37,13 +37,15 @@ elseif (APPLE)
 endif (MSVC)
 
 #Find GLEW
-set(GLEW_DIR "C:\\Users\\Lijin\\Downloads\\glew-2.0.0-win32\\glew-2.0.0\\")
-set(GLEW_INCLUDE_DIR "${GLEW_DIR}\\include")
-set(GLEW_DLL "${GLEW_DIR}\\bin\\Release\\x64\\glew32.dll")
-set(GLEW_LIB_DIR "${GLEW_DIR}\\lib\\Release\\x64")
-set(GLEW_LIB "glew32.lib")
-include_directories(${GLEW_INCLUDE_DIR})
-link_directories(${GLEW_LIB_DIR})
+if (MSVC)
+    set(GLEW_DIR "C:\\Users\\Lijin\\Downloads\\glew-2.0.0-win32\\glew-2.0.0\\")
+    set(GLEW_INCLUDE_DIR "${GLEW_DIR}\\include")
+    set(GLEW_DLL "${GLEW_DIR}\\bin\\Release\\x64\\glew32.dll")
+    set(GLEW_LIB_DIR "${GLEW_DIR}\\lib\\Release\\x64")
+    set(GLEW_LIB "glew32.lib")
+    include_directories(${GLEW_INCLUDE_DIR})
+    link_directories(${GLEW_LIB_DIR})
+endif (MSVC)
 
 #to use the cyTriMesh code release for parsing the obj file
 include_directories(${CY_INCLUDE_DIR})
