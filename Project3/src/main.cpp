@@ -70,7 +70,8 @@ void setModelViewProjectionMatrix(){
 }
 
 void setupBuffers(){
-    //Generate a vertex buffer and set its data using the vertices read from .obj file
+    //Generate a vertex buffer
+    //and set its data using the vertices read from .obj file
     GLuint vertex_position_buffer;
     glGenBuffers(1, &vertex_position_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer);
@@ -78,13 +79,22 @@ void setupBuffers(){
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    }
+
+    //Generate buffers for the triangle vertices of an .obj file
+    GLuint vertex_index_buffer;
+    glGenBuffers(1, &vertex_index_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_index_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cy::TriMesh::TriFace) * g_mesh->NF(), &g_mesh->F(0),GL_STATIC_DRAW);
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_index_buffer);
+    glVertexAttribPointer(1, 3, GL_UNSIGNED_INT, GL_FALSE, 0, 0);
+}
 
 void onDisplay(){
     glClear(GL_COLOR_BUFFER_BIT);
     glClearColor(0.0f, 0.0f, 0.0f ,1.0f);
 
-    glDrawArrays(GL_POINTS, 0, g_mesh->NV());
+    glDrawElements(GL_TRIANGLES, g_mesh->NF(), GL_UNSIGNED_INT, &g_mesh->F(0));
 
     glutSwapBuffers();
 }
