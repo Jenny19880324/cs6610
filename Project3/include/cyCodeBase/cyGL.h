@@ -313,7 +313,7 @@ public:
 
 #ifdef _CY_POINT_H_INCLUDED_
 	void SetUniform(int param, const Point2<float>   &p) { glUniform2fv (params[param],2,&p.x); }	//!< Sets the value of the uniform parameter with the given index. The parameter must be registered before.
-	void SetUniform(int param, const Point3<float>   &p) { glUniform3fv (params[param],3,&p.x); }	//!< Sets the value of the uniform parameter with the given index. The parameter must be registered before.
+	void SetUniform(int param, const Point3<float>   &p) { glUniform3fv (params[param],1,&p.x); }	//!< Sets the value of the uniform parameter with the given index. The parameter must be registered before.
 	void SetUniform(int param, const Point4<float>   &p) { glUniform4fv (params[param],4,&p.x); }	//!< Sets the value of the uniform parameter with the given index. The parameter must be registered before.
 	template <int N>
 	void SetUniform(int param, const Point<float, N> &p) { glUniform4fv (params[param],N,p.data); }	//!< Sets the value of the uniform parameter with the given index. The parameter must be registered before.

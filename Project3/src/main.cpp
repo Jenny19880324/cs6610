@@ -32,31 +32,36 @@ Point3f g_centerV(0, 0, 0);
 Point3f g = Point3f(0.0, 0.0, -1.0); // gaze direction
 Point3f e = Point3f(0.0, 0.0, 0.0); // eye position
 Point3f t = Point3f(0.0, 1.0, 0.0); // view up direction
+Point3f g_light_position = Point3f(100, 0, 0);
+
 float dist;
 //mouse operation
 Point2f g_dist_record_coord;
 Point2f g_angle_record_coord;
-//Point3f g_light_position(10.0, 20.0, 50.0);
-Point3f g_light_color(1.0, 0.0, 0.0);
+Point2f g_light_record_coord;
+
 bool g_dist_record = false;
 bool g_angle_record = false;
+bool g_light_record = false;
+
 Matrix4<float> g_view_matrix;
 Matrix4<float> g_model_matrix;
 Matrix4<float> g_projection_matrix;
 Matrix4<float> g_model_view_matrix;
 Matrix4<float> g_normal_transform_matrix;
 Matrix4<float> g_model_view_projection_matrix;
+Matrix4<float> g_light_rotation_matrix;
 
 GLint vertex_position_location;
 GLint vertex_normal_location;
 GLint g_model_view_projection_matrix_location;
 GLint g_normal_transform_matrix_location;
 GLint g_model_view_matrix_location;
-//GLint g_light_position_location;
+GLint g_light_position_location;
 ////////////////////////////////////////////////////////////////////////////////
 void setModelViewProjectionMatrix(){
     //transformation
-    e = Point3f(0.0, 0.0, dist);
+    e = Point3f(0.0, 20.0, dist);
     Point3f w = -g / g.Length();
     Point3f u = t.Cross(w) / (t.Cross(w)).Length();
     Point3f v = w.Cross(u);
@@ -70,14 +75,20 @@ void setModelViewProjectionMatrix(){
     Matrix4<float> temp = g_model_view_matrix.GetInverse();
     g_normal_transform_matrix = temp.GetTranspose();
     g_model_view_projection_matrix = g_projection_matrix * g_view_matrix * g_model_matrix;
-    g_program->SetUniformMatrix4(0, g_model_view_projection_matrix.data);
-    g_program->SetUniformMatrix4(1, g_normal_transform_matrix.data);
-    g_program->SetUniformMatrix4(2, g_model_view_matrix.data);
-    //g_program->SetUniform(3, g_light_position);
-cout << "g_model_view_projection_matrix_location = " << g_model_view_projection_matrix_location << endl;
-cout << "g_normal_transform_matrix_location = " << g_normal_transform_matrix_location << endl;
-cout << "g_model_view_matrix_location = " << g_model_view_matrix_location << endl;
-//cout << "g_light_position_location = " << g_light_position_location << endl;
+
+    g_light_rotation_matrix.SetRotationXYZ(g_light_record_coord.x, g_light_record_coord.y, g_light_record_coord.x);
+    g_light_position = Point3f(g_view_matrix * g_light_rotation_matrix * Point4f(100.0, 0.0, 0.0, 1.0));
+//float *d = g_light_rotation_matrix.data;
+//cout << "g_light_rotation_matrix = " << d[0] << " " << d[4] << " " << d[8] << " " << d[12] << endl;
+//cout << "                          " << d[1] << " " << d[5] << " " << d[9] << " " << d[13] << endl;
+//cout << "                          " << d[2] << " " << d[6] << " " << d[10] << " " << d[14] << endl;
+//cout << "                          " << d[3] << " " << d[7] << " " << d[11] << " " << d[15] << endl;
+
+//cout << "g_light_position = (" << g_light_position.x << "," << g_light_position.y << "," << g_light_position.z << ")" << endl;
+    g_program->SetUniform(0, g_light_position);
+    g_program->SetUniformMatrix4(1, g_model_view_projection_matrix.data);
+    g_program->SetUniformMatrix4(2, g_normal_transform_matrix.data);
+    g_program->SetUniformMatrix4(3, g_model_view_matrix.data);
 }
 
 void setupBuffers(){
@@ -120,10 +131,13 @@ void cursor_position_callback(GLFWwindow *window, double xpos, double ypos){
     if(g_angle_record){
         g.x = (xpos - g_angle_record_coord.x) * 0.1;
         g.y = (ypos - g_angle_record_coord.y) * 0.1;
-//cout << "g = (" << g.x << "," << g.y << "," << g.z << ")" << endl;
    }
     if(g_dist_record){
         dist = ypos - g_dist_record_coord.y;
+    }
+    if(g_light_record){
+        g_light_record_coord.x = xpos;
+        g_light_record_coord.y = ypos;
     }
     setModelViewProjectionMatrix();
 }
@@ -144,12 +158,24 @@ void mouse_button_callback(GLFWwindow *window,int button, int action, int mods){
     }
     else if(button == GLFW_MOUSE_BUTTON_LEFT){
         if(action == GLFW_PRESS){
-            if(!g_dist_record){
-                g_dist_record_coord = Point2f(xpos, ypos);
-                g_dist_record = true;
+            if(mods == GLFW_MOD_CONTROL){
+cout << "ctrl + left" << endl;
+                if(!g_light_record){
+                    g_light_record_coord = Point2f(xpos, ypos);
+                    g_light_record = true;
+                }
+            }
+            else{
+                if(!g_dist_record){
+cout << "left press" << endl;
+                    g_dist_record_coord = Point2f(xpos, ypos);
+                    g_dist_record = true;
+                }
            }
         }
         else{
+cout << "left release" << endl;
+            g_light_record = false;
             g_dist_record = false;
         }
     }
@@ -195,7 +221,6 @@ int main(int argc, char *argv[]){
     dist = (g_maxV - g_minV).z * 3;
     e = Point3f(0.0, 0.0, dist);
     g = g_centerV - e;
-//cout << "g = (" << g.x << "," << g.y << "," << g.z << ")" << endl;
     //GLFW window
     glfwSetErrorCallback(error_callback);
     if (!glfwInit()){
@@ -228,21 +253,18 @@ int main(int argc, char *argv[]){
     //glsl shader
     g_program = new GLSLProgram();
     g_program->BuildFiles("../glsl/vert.txt", "../glsl/frag.txt");
-    g_program->RegisterUniform(0, "modelViewProjection");
-    g_program->RegisterUniform(1, "normalTransform");
-    g_program->RegisterUniform(2, "modelView");
-    //g_program->RegisterUniform(3, "lightPosition");
+    g_program->RegisterUniform(0, "lightPosition");
+    g_program->RegisterUniform(1, "modelViewProjection");
+    g_program->RegisterUniform(2, "normalTransform");
+    g_program->RegisterUniform(3, "modelView");
     g_program->Bind();
     vertex_position_location = glGetAttribLocation(g_program->GetID(), "pos");
     vertex_normal_location = glGetAttribLocation(g_program->GetID(), "inputNormal");
     g_model_view_projection_matrix_location = glGetUniformLocation(g_program->GetID(), "modelViewProjection");
     g_normal_transform_matrix_location = glGetUniformLocation(g_program->GetID(), "normalTransform");
     g_model_view_matrix_location = glGetUniformLocation(g_program->GetID(), "modelView");
-    //g_light_position_location = glGetUniformLocation(g_program->GetID(), "lightPosition");
-cout << "g_model_view_projection_matrix_location = " << g_model_view_projection_matrix_location << endl;
-cout << "g_normal_transform_matrix_location = " << g_normal_transform_matrix_location << endl;
-cout << "g_model_view_matrix_location = " << g_model_view_matrix_location << endl;
-//cout << "g_light_position_location = " << g_light_position_location << endl;
+    g_light_position_location = glGetUniformLocation(g_program->GetID(), "lightPosition");
+cout << "g_light_position_location = " << g_light_position_location << endl;
     setModelViewProjectionMatrix();
     setupBuffers();
 
