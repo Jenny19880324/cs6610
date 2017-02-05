@@ -36,7 +36,7 @@ float dist;
 //mouse operation
 Point2f g_dist_record_coord;
 Point2f g_angle_record_coord;
-Point3f g_light_position(0.0, 5.0, 0.0);
+//Point3f g_light_position(10.0, 20.0, 50.0);
 Point3f g_light_color(1.0, 0.0, 0.0);
 bool g_dist_record = false;
 bool g_angle_record = false;
@@ -52,7 +52,7 @@ GLint vertex_normal_location;
 GLint g_model_view_projection_matrix_location;
 GLint g_normal_transform_matrix_location;
 GLint g_model_view_matrix_location;
-GLint g_light_position_location;
+//GLint g_light_position_location;
 ////////////////////////////////////////////////////////////////////////////////
 void setModelViewProjectionMatrix(){
     //transformation
@@ -73,11 +73,11 @@ void setModelViewProjectionMatrix(){
     g_program->SetUniformMatrix4(0, g_model_view_projection_matrix.data);
     g_program->SetUniformMatrix4(1, g_normal_transform_matrix.data);
     g_program->SetUniformMatrix4(2, g_model_view_matrix.data);
-    g_program->SetUniform(3, g_light_position);
+    //g_program->SetUniform(3, g_light_position);
 cout << "g_model_view_projection_matrix_location = " << g_model_view_projection_matrix_location << endl;
 cout << "g_normal_transform_matrix_location = " << g_normal_transform_matrix_location << endl;
 cout << "g_model_view_matrix_location = " << g_model_view_matrix_location << endl;
-cout << "g_light_position_location = " << g_light_position_location << endl;
+//cout << "g_light_position_location = " << g_light_position_location << endl;
 }
 
 void setupBuffers(){
@@ -231,18 +231,18 @@ int main(int argc, char *argv[]){
     g_program->RegisterUniform(0, "modelViewProjection");
     g_program->RegisterUniform(1, "normalTransform");
     g_program->RegisterUniform(2, "modelView");
-    g_program->RegisterUniform(3, "lightPosition");
+    //g_program->RegisterUniform(3, "lightPosition");
     g_program->Bind();
     vertex_position_location = glGetAttribLocation(g_program->GetID(), "pos");
-    vertex_normal_location = glGetAttribLocation(g_program->GetID(), "normal");
+    vertex_normal_location = glGetAttribLocation(g_program->GetID(), "inputNormal");
     g_model_view_projection_matrix_location = glGetUniformLocation(g_program->GetID(), "modelViewProjection");
     g_normal_transform_matrix_location = glGetUniformLocation(g_program->GetID(), "normalTransform");
     g_model_view_matrix_location = glGetUniformLocation(g_program->GetID(), "modelView");
-    g_light_position_location = glGetUniformLocation(g_program->GetID(), "lightPosition");
+    //g_light_position_location = glGetUniformLocation(g_program->GetID(), "lightPosition");
 cout << "g_model_view_projection_matrix_location = " << g_model_view_projection_matrix_location << endl;
 cout << "g_normal_transform_matrix_location = " << g_normal_transform_matrix_location << endl;
 cout << "g_model_view_matrix_location = " << g_model_view_matrix_location << endl;
-cout << "g_light_position_location = " << g_light_position_location << endl;
+//cout << "g_light_position_location = " << g_light_position_location << endl;
     setModelViewProjectionMatrix();
     setupBuffers();
 
