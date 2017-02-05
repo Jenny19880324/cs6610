@@ -36,6 +36,8 @@ float dist;
 //mouse operation
 Point2f g_dist_record_coord;
 Point2f g_angle_record_coord;
+Point3f g_light_position(0.0, 5.0, 0.0);
+Point3f g_light_color(1.0, 0.0, 0.0);
 bool g_dist_record = false;
 bool g_angle_record = false;
 Matrix4<float> g_view_matrix;
@@ -49,6 +51,8 @@ GLint vertex_position_location;
 GLint vertex_normal_location;
 GLint g_model_view_projection_matrix_location;
 GLint g_normal_transform_matrix_location;
+GLint g_model_view_matrix_location;
+GLint g_light_position_location;
 ////////////////////////////////////////////////////////////////////////////////
 void setModelViewProjectionMatrix(){
     //transformation
@@ -57,7 +61,6 @@ void setModelViewProjectionMatrix(){
     Point3f u = t.Cross(w) / (t.Cross(w)).Length();
     Point3f v = w.Cross(u);
 
-//cout << "g = (" << g.x << ", " << g.y << ", " << g.z << ")" << endl;
     g_view_matrix.Set(u, v, w, e);
     g_view_matrix.Invert();
     g_model_matrix.SetRotationX(-PI/2);
@@ -66,21 +69,15 @@ void setModelViewProjectionMatrix(){
     g_model_view_matrix = g_view_matrix * g_model_matrix;
     Matrix4<float> temp = g_model_view_matrix.GetInverse();
     g_normal_transform_matrix = temp.GetTranspose();
-    //g_normal_transform_matrix.SetIdentity();
-
-float *d = g_normal_transform_matrix.data;
-cout << "g_normal_transform_matrix = " << d[0] << " " << d[4] << " " << d[8] << " " << d[12] << endl;
-cout << "                            " << d[1] << " " << d[5] << " " << d[9] << " " << d[13] << endl;
-cout << "                            " << d[2] << " " << d[6] << " " << d[10] << " " << d[14] << endl;
-cout << "                            " << d[3] << " " << d[7] << " " << d[11] << " " << d[15] << endl;
-
-//for(int i = 0; i < g_mesh->NV(); i++){
-//    Point4f tn = g_normal_transform_matrix * g_mesh->VN(i);
-//    cout << "tn = (" << tn.x << "," << tn.y << "," << tn.z << "," << tn.w << ")" << endl;
-//}
     g_model_view_projection_matrix = g_projection_matrix * g_view_matrix * g_model_matrix;
     g_program->SetUniformMatrix4(0, g_model_view_projection_matrix.data);
     g_program->SetUniformMatrix4(1, g_normal_transform_matrix.data);
+    g_program->SetUniformMatrix4(2, g_model_view_matrix.data);
+    g_program->SetUniform(3, g_light_position);
+cout << "g_model_view_projection_matrix_location = " << g_model_view_projection_matrix_location << endl;
+cout << "g_normal_transform_matrix_location = " << g_normal_transform_matrix_location << endl;
+cout << "g_model_view_matrix_location = " << g_model_view_matrix_location << endl;
+cout << "g_light_position_location = " << g_light_position_location << endl;
 }
 
 void setupBuffers(){
@@ -233,11 +230,19 @@ int main(int argc, char *argv[]){
     g_program->BuildFiles("../glsl/vert.txt", "../glsl/frag.txt");
     g_program->RegisterUniform(0, "modelViewProjection");
     g_program->RegisterUniform(1, "normalTransform");
+    g_program->RegisterUniform(2, "modelView");
+    g_program->RegisterUniform(3, "lightPosition");
     g_program->Bind();
     vertex_position_location = glGetAttribLocation(g_program->GetID(), "pos");
     vertex_normal_location = glGetAttribLocation(g_program->GetID(), "normal");
     g_model_view_projection_matrix_location = glGetUniformLocation(g_program->GetID(), "modelViewProjection");
     g_normal_transform_matrix_location = glGetUniformLocation(g_program->GetID(), "normalTransform");
+    g_model_view_matrix_location = glGetUniformLocation(g_program->GetID(), "modelView");
+    g_light_position_location = glGetUniformLocation(g_program->GetID(), "lightPosition");
+cout << "g_model_view_projection_matrix_location = " << g_model_view_projection_matrix_location << endl;
+cout << "g_normal_transform_matrix_location = " << g_normal_transform_matrix_location << endl;
+cout << "g_model_view_matrix_location = " << g_model_view_matrix_location << endl;
+cout << "g_light_position_location = " << g_light_position_location << endl;
     setModelViewProjectionMatrix();
     setupBuffers();
 
