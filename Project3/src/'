@@ -52,6 +52,8 @@ GLint g_model_view_matrix_location;
 void setModelViewProjectionMatrix(){
     //transformation
     e = Point3f(0.0, 0.0, -dist);
+    //g = g_centerV - e;
+    g = Point3f(0, 0, -1);
     Point3f w = -g / g.Length();
     Point3f u = t.Cross(w) / (t.Cross(w)).Length();
     Point3f v = w.Cross(u);
@@ -106,12 +108,11 @@ void onDisplay(){
 }
 
 void cursor_position_callback(GLFWwindow *window, double xpos, double ypos){
+cout << "cursor_position_callback" << endl;
     if(g_angle_record){
-cout << "g_angle_record_coord = (" << g_angle_record_coord.x << ", " << g_angle_record_coord.y << ")" << endl;
         g.x = (xpos - g_angle_record_coord.x) * 0.1;
         g.y = (ypos - g_angle_record_coord.y) * 0.1;
- cout << "g = (" << g.x << ", " << g.y << ")" << endl;
-   }
+    }
     if(g_dist_record){
 cout << "dist = " << dist << endl;
         dist = ypos - g_dist_record_coord.y;
@@ -185,8 +186,7 @@ int main(int argc, char *argv[]){
         if(g_mesh->V(i).z > g_maxV.z) g_maxV.z = g_mesh->V(i).z;
     }
     g_centerV = Point3f((g_minV + g_maxV) / 2);
-    dist = (g_maxV - g_minV).z * 3;
-    g = g_centerV - e;
+    dist = (g_maxV - g_minV).z * 2;
 
     //GLFW window
     glfwSetErrorCallback(error_callback);

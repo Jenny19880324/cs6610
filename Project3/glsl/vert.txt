@@ -1,7 +1,12 @@
-attribute vec3 pos;
+#version 330
+layout(location = 0) in vec3 pos;
+layout(location = 1) in vec3 normal;
+out vec3 color;
 
 uniform mat4 modelViewProjection;
+uniform mat4 modelView;
 
 void main(){
     gl_Position = modelViewProjection * vec4(pos, 1.0);
+    color = (transpose(inverse(modelView)) * vec4(normal, 1.0)).xyz;
 }

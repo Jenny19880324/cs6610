@@ -1,72 +1,39 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 3.1.1)
 
 #to supress generation of ZERO_CHECK
-set(CMAKE_SUPPRESS_GENERATION true)
-set(SRCS src/main.cpp)
-set(PROJ Transformations)
-set(CY_INCLUDE_DIR dependencies/cyCodeBase)
+set(CMAKE_SUPPRESS_GENERATION TRUE)
+set(PROJ Shading)
 
 project(${PROJ})
 
-#FIND OPENGL
-find_package(OpenGL REQUIRED)
-include_directories(${OpenGL_INCLUDE_DIRS})
-link_directories(${OpenGL_DEFINITIONS})
-if(NOT OPENGL_FOUND)
-    message(ERROR "OpenGL not found!")
-endif(NOT OPENGL_FOUND)
-
-
-#Find FREEGLUT
+#GLFW
 if (MSVC)
-    set(FREEGLUT_DIR "C:\\Users\\Lijin\\Downloads\\freeglut-MSVC-3.0.0-2.mp\\freeglut\\")
-    set(FREEGLUT_INCLUDE_DIR "${FREEGLUT_DIR}\\include")
-    set(FREEGLUT_DLL "${FREEGLUT_DIR}/bin/x64/freeglut.dll")
-    set(FREEGLUT_LIB_DIR "${FREEGLUT_DIR}\\lib\\x64")
-    include_directories(${FREEGLUT_INCLUDE_DIR})
-    link_directories(${FREEGLUT_LIB_DIR})
-#Find GLUT
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "C:/Program Files/GLFW/lib/cmake")
+    set(GLFW_INCLUDE_PATH "C:/Program Files/GLFW/include")
 elseif (APPLE)
-    find_package(GLUT REQUIRED)
-    include_directories(${GLUT_INCLUDE_DIRS})
-    link_directories(${GLUT_LIBRSRY_DIRS})
-    add_definitions(${GLUT_DEFINITIONS})
-    if(NOT GLUT_FOUND)
-        message(ERROR "GLUT not found!")
-    endif(NOT GLUT_FOUND)
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "/usr/locla/lib/cmake")
+    set(GLFW_INCLUDE_DIR "/usr/local/include/GLFW")
 endif (MSVC)
 
-#Find GLEW
-if (MSVC)
-    set(GLEW_DIR "C:\\Users\\Lijin\\Downloads\\glew-2.0.0-win32\\glew-2.0.0\\")
-    set(GLEW_INCLUDE_DIR "${GLEW_DIR}\\include")
-    set(GLEW_DLL "${GLEW_DIR}\\bin\\Release\\x64\\glew32.dll")
-    set(GLEW_LIB_DIR "${GLEW_DIR}\\lib\\Release\\x64")
-    set(GLEW_LIB "glew32.lib")
-    include_directories(${GLEW_INCLUDE_DIR})
-    link_directories(${GLEW_LIB_DIR})
-endif (MSVC)
-
-#to use the cyTriMesh code release for parsing the obj file
-include_directories(${CY_INCLUDE_DIR})
-
-#DISABLE WARNINGS FROM GL3
-if (APPLE)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
-endif (APPLE)
+find_package(glfw3 3.2 REQUIRED)
 
 #EXECUTABLE
 add_executable(${PROJ}
-    ${SRCS})
+src/main.cpp
+src/glad.cpp)
+
+#INCLUDE
+target_include_directories(${PROJ} PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${GLFW_INCLUDE_PATH})
 
 #LINKING
-target_link_libraries(${PROJ} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${GLEW_LIB})
+target_link_libraries(${PROJ} glfw)
 
 #COPY DLL to exe folder
-if (MSVC)
-    add_custom_command(TARGET Transformations POST_BUILD
-	    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	    ${FREEGLUT_DLL} ${GLEW_DLL}
-	    $<TARGET_FILE_DIR:Transformations>)
-endif (MSVC)
+#if (MSVC)
+#    add_custom_command(TARGET Transformations POST_BUILD
+#	    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#	    ${FREEGLUT_DLL} ${GLEW_DLL}
+#	    $<TARGET_FILE_DIR:Transformations>)
+#endif (MSVC)
