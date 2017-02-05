@@ -51,6 +51,7 @@ Matrix4<float> g_model_view_matrix;
 Matrix4<float> g_normal_transform_matrix;
 Matrix4<float> g_model_view_projection_matrix;
 Matrix4<float> g_light_rotation_matrix;
+Matrix4<float> g_mouse_rotation_matrix;
 
 GLint vertex_position_location;
 GLint vertex_normal_location;
@@ -69,6 +70,7 @@ void setModelViewProjectionMatrix(){
     g_view_matrix.Set(u, v, w, e);
     g_view_matrix.Invert();
     g_model_matrix.SetRotationX(-PI/2);
+    g_model_matrix = g_mouse_rotation_matrix * g_model_matrix;
     float aspect = (float)g_screen_width/(float)g_screen_height;
     g_projection_matrix.SetPerspective(PI/3, aspect, 20, -20);
     g_model_view_matrix = g_view_matrix * g_model_matrix;
@@ -76,15 +78,13 @@ void setModelViewProjectionMatrix(){
     g_normal_transform_matrix = temp.GetTranspose();
     g_model_view_projection_matrix = g_projection_matrix * g_view_matrix * g_model_matrix;
 
-    g_light_rotation_matrix.SetRotationXYZ(g_light_record_coord.x, g_light_record_coord.y, g_light_record_coord.x);
+    Matrix4<float> rz;
+    rz.SetRotation(Point3f(0, 0, 1), g_light_record_coord.y);
+    Matrix4<float> rx;
+    rx.SetRotation(Point3f(0, 1, 0), g_light_record_coord.x);
+    g_light_rotation_matrix = rx * rz;
     g_light_position = Point3f(g_view_matrix * g_light_rotation_matrix * Point4f(100.0, 0.0, 0.0, 1.0));
-//float *d = g_light_rotation_matrix.data;
-//cout << "g_light_rotation_matrix = " << d[0] << " " << d[4] << " " << d[8] << " " << d[12] << endl;
-//cout << "                          " << d[1] << " " << d[5] << " " << d[9] << " " << d[13] << endl;
-//cout << "                          " << d[2] << " " << d[6] << " " << d[10] << " " << d[14] << endl;
-//cout << "                          " << d[3] << " " << d[7] << " " << d[11] << " " << d[15] << endl;
 
-//cout << "g_light_position = (" << g_light_position.x << "," << g_light_position.y << "," << g_light_position.z << ")" << endl;
     g_program->SetUniform(0, g_light_position);
     g_program->SetUniformMatrix4(1, g_model_view_projection_matrix.data);
     g_program->SetUniformMatrix4(2, g_normal_transform_matrix.data);
@@ -129,8 +129,11 @@ void onDisplay(){
 
 void cursor_position_callback(GLFWwindow *window, double xpos, double ypos){
     if(g_angle_record){
-        g.x = (xpos - g_angle_record_coord.x) * 0.1;
-        g.y = (ypos - g_angle_record_coord.y) * 0.1;
+        Matrix4<float> rz;
+        rz.SetRotation(Point3f(1, 0, 0), ypos - g_angle_record_coord.y);
+        Matrix4<float> rx;
+        rx.SetRotation(Point3f(0, 1, 0), xpos - g_angle_record_coord.x);
+        g_mouse_rotation_matrix = rx * rz;
    }
     if(g_dist_record){
         dist = ypos - g_dist_record_coord.y;
@@ -159,7 +162,6 @@ void mouse_button_callback(GLFWwindow *window,int button, int action, int mods){
     else if(button == GLFW_MOUSE_BUTTON_LEFT){
         if(action == GLFW_PRESS){
             if(mods == GLFW_MOD_CONTROL){
-cout << "ctrl + left" << endl;
                 if(!g_light_record){
                     g_light_record_coord = Point2f(xpos, ypos);
                     g_light_record = true;
@@ -167,14 +169,12 @@ cout << "ctrl + left" << endl;
             }
             else{
                 if(!g_dist_record){
-cout << "left press" << endl;
                     g_dist_record_coord = Point2f(xpos, ypos);
                     g_dist_record = true;
                 }
            }
         }
         else{
-cout << "left release" << endl;
             g_light_record = false;
             g_dist_record = false;
         }
@@ -221,6 +221,8 @@ int main(int argc, char *argv[]){
     dist = (g_maxV - g_minV).z * 3;
     e = Point3f(0.0, 0.0, dist);
     g = g_centerV - e;
+    g_mouse_rotation_matrix.SetIdentity();
+
     //GLFW window
     glfwSetErrorCallback(error_callback);
     if (!glfwInit()){
