@@ -34,6 +34,6 @@ Windows10
 4. Open Transformations.sln in the build folder using VS2015
 5. Set Shading as start project
 6. In project properties -> Debugging set Command Arguments to "../obj/teapot.obj"
-7. Build Transformations
-8. run Transformations from VS
+7. Build Shading
+8. run Shading from VS
 
