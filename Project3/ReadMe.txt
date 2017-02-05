@@ -27,7 +27,8 @@ Windows10
 2. Install GLFW
 2.1 Download GLFW from http://www.glfw.org/ and extract glfw-3.2.1.zip
 2.2 In glfw-3.2.1 mkdir glfw-build, cd glfw-build, cmake .. -G "Visual Studio 14 Win64"
-2.3 cmake --build .  --target INSTALL --config Release
+2.3 Run Visual Studio as administrator and open GLFW.sln. Choose release and build INSTALL
+(cmake --build .  --target INSTALL --config Release not working)
     then you can see that GLFW is installed in C:/Program Files/GLFW
 3. make a build foder in Project3, cd to the build folder and type cmake .. -G "Visual Studio 14 Win64"
 4. Open Transformations.sln in the build folder using VS2015
