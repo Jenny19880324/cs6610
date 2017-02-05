@@ -4,9 +4,9 @@ layout(location = 1) in vec3 normal;
 out vec3 color;
 
 uniform mat4 modelViewProjection;
-uniform mat4 modelView;
+uniform mat4 normalTransform;
 
 void main(){
     gl_Position = modelViewProjection * vec4(pos, 1.0);
-    color = (transpose(inverse(modelView)) * vec4(normal, 1.0)).xyz;
+    color = (normalTransform * vec4(normal, 0.0)).xyz;
 }

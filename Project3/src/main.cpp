@@ -30,7 +30,7 @@ Point3f g_minV(FLT_MAX, FLT_MAX, FLT_MAX);
 Point3f g_maxV(FLT_MIN, FLT_MIN, FLT_MIN);
 Point3f g_centerV(0, 0, 0);
 Point3f g = Point3f(0.0, 0.0, -1.0); // gaze direction
-Point3f e = Point3f(0.0, 1.0, 0.0); // eye position
+Point3f e = Point3f(0.0, 0.0, 0.0); // eye position
 Point3f t = Point3f(0.0, 1.0, 0.0); // view up direction
 float dist;
 //mouse operation
@@ -42,31 +42,45 @@ Matrix4<float> g_view_matrix;
 Matrix4<float> g_model_matrix;
 Matrix4<float> g_projection_matrix;
 Matrix4<float> g_model_view_matrix;
+Matrix4<float> g_normal_transform_matrix;
 Matrix4<float> g_model_view_projection_matrix;
 
 GLint vertex_position_location;
 GLint vertex_normal_location;
 GLint g_model_view_projection_matrix_location;
-GLint g_model_view_matrix_location;
+GLint g_normal_transform_matrix_location;
 ////////////////////////////////////////////////////////////////////////////////
 void setModelViewProjectionMatrix(){
     //transformation
-    e = Point3f(0.0, 0.0, -dist);
+    e = Point3f(0.0, 0.0, dist);
     Point3f w = -g / g.Length();
     Point3f u = t.Cross(w) / (t.Cross(w)).Length();
     Point3f v = w.Cross(u);
 
 //cout << "g = (" << g.x << ", " << g.y << ", " << g.z << ")" << endl;
     g_view_matrix.Set(u, v, w, e);
+    g_view_matrix.Invert();
     g_model_matrix.SetRotationX(-PI/2);
     float aspect = (float)g_screen_width/(float)g_screen_height;
     g_projection_matrix.SetPerspective(PI/3, aspect, 20, -20);
     g_model_view_matrix = g_view_matrix * g_model_matrix;
+    Matrix4<float> temp = g_model_view_matrix.GetInverse();
+    g_normal_transform_matrix = temp.GetTranspose();
+    //g_normal_transform_matrix.SetIdentity();
+
+float *d = g_normal_transform_matrix.data;
+cout << "g_normal_transform_matrix = " << d[0] << " " << d[4] << " " << d[8] << " " << d[12] << endl;
+cout << "                            " << d[1] << " " << d[5] << " " << d[9] << " " << d[13] << endl;
+cout << "                            " << d[2] << " " << d[6] << " " << d[10] << " " << d[14] << endl;
+cout << "                            " << d[3] << " " << d[7] << " " << d[11] << " " << d[15] << endl;
+
+//for(int i = 0; i < g_mesh->NV(); i++){
+//    Point4f tn = g_normal_transform_matrix * g_mesh->VN(i);
+//    cout << "tn = (" << tn.x << "," << tn.y << "," << tn.z << "," << tn.w << ")" << endl;
+//}
     g_model_view_projection_matrix = g_projection_matrix * g_view_matrix * g_model_matrix;
-    g_model_view_projection_matrix_location = glGetUniformLocation(g_program->GetID(), "modelViewProjection");
-    g_model_view_matrix_location = glGetUniformLocation(g_program->GetID(), "modelView");
-    g_program->SetUniformMatrix4(g_model_view_projection_matrix_location, g_model_view_projection_matrix.data);
-    g_program->SetUniformMatrix4(g_model_view_matrix_location, g_model_view_matrix.data);
+    g_program->SetUniformMatrix4(0, g_model_view_projection_matrix.data);
+    g_program->SetUniformMatrix4(1, g_normal_transform_matrix.data);
 }
 
 void setupBuffers(){
@@ -107,13 +121,11 @@ void onDisplay(){
 
 void cursor_position_callback(GLFWwindow *window, double xpos, double ypos){
     if(g_angle_record){
-cout << "g_angle_record_coord = (" << g_angle_record_coord.x << ", " << g_angle_record_coord.y << ")" << endl;
         g.x = (xpos - g_angle_record_coord.x) * 0.1;
         g.y = (ypos - g_angle_record_coord.y) * 0.1;
- cout << "g = (" << g.x << ", " << g.y << ")" << endl;
+//cout << "g = (" << g.x << "," << g.y << "," << g.z << ")" << endl;
    }
     if(g_dist_record){
-cout << "dist = " << dist << endl;
         dist = ypos - g_dist_record_coord.y;
     }
     setModelViewProjectionMatrix();
@@ -125,7 +137,6 @@ void mouse_button_callback(GLFWwindow *window,int button, int action, int mods){
     if(button == GLFW_MOUSE_BUTTON_RIGHT){
         if(action == GLFW_PRESS){
             if(!g_angle_record){
-cout << "g_angle_record" << endl;
                 g_angle_record_coord = Point2f(xpos, ypos);
                 g_angle_record = true;
             }
@@ -139,7 +150,6 @@ cout << "g_angle_record" << endl;
             if(!g_dist_record){
                 g_dist_record_coord = Point2f(xpos, ypos);
                 g_dist_record = true;
-cout << "g_dist_record" << endl;
            }
         }
         else{
@@ -186,8 +196,9 @@ int main(int argc, char *argv[]){
     }
     g_centerV = Point3f((g_minV + g_maxV) / 2);
     dist = (g_maxV - g_minV).z * 3;
+    e = Point3f(0.0, 0.0, dist);
     g = g_centerV - e;
-
+//cout << "g = (" << g.x << "," << g.y << "," << g.z << ")" << endl;
     //GLFW window
     glfwSetErrorCallback(error_callback);
     if (!glfwInit()){
@@ -221,10 +232,12 @@ int main(int argc, char *argv[]){
     g_program = new GLSLProgram();
     g_program->BuildFiles("../glsl/vert.txt", "../glsl/frag.txt");
     g_program->RegisterUniform(0, "modelViewProjection");
-    g_program->RegisterUniform(1, "modelView");
+    g_program->RegisterUniform(1, "normalTransform");
     g_program->Bind();
     vertex_position_location = glGetAttribLocation(g_program->GetID(), "pos");
     vertex_normal_location = glGetAttribLocation(g_program->GetID(), "normal");
+    g_model_view_projection_matrix_location = glGetUniformLocation(g_program->GetID(), "modelViewProjection");
+    g_normal_transform_matrix_location = glGetUniformLocation(g_program->GetID(), "normalTransform");
     setModelViewProjectionMatrix();
     setupBuffers();
 
