@@ -360,13 +360,18 @@ inline bool renderPlane(){
     //textures
     g_render_buffer->Initialize(true);
     g_render_buffer->Resize(4, g_screen_width, g_screen_height);
-    if(!g_render_buffer->IsComplete()){
+   if(!g_render_buffer->IsComplete()){
         printf("buffer not complete\n"); return false;
     }
 
     g_render_buffer->BindTexture(4);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
     GLint texLoc = glGetUniformLocation(g_plane_program->GetID(), "map_Kd");
     glUniform1i(texLoc, g_render_buffer->GetTextureID());
+    g_render_buffer->BuildTextureMipmaps();
+    g_render_buffer->SetTextureMaxAnisotropy();
+    g_render_buffer->SetTextureFilteringMode(GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST);
 
     return true;
 }
