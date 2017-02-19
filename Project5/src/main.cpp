@@ -230,16 +230,16 @@ void onDisplay(){
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glDrawArrays(GL_TRIANGLES, 0, g_mesh->NF() * 3);
-    g_render_buffer->Unbind();
+    //g_render_buffer->Unbind();
 
-    glUseProgram(g_plane_program->GetID());
-    glBindVertexArray(g_plane_VAO);
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-    glClearColor(0.0f, 0.0f, 0.0f ,1.0f);
-    glEnableVertexAttribArray(plane_vertex_position_location);
-    glEnableVertexAttribArray(plane_vertex_texcoord_location);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-    glfwSwapBuffers(g_window);
+    //glUseProgram(g_plane_program->GetID());
+    //glBindVertexArray(g_plane_VAO);
+    //glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    //glClearColor(0.0f, 0.0f, 0.0f ,1.0f);
+    //glEnableVertexAttribArray(plane_vertex_position_location);
+    //glEnableVertexAttribArray(plane_vertex_texcoord_location);
+    //glDrawArrays(GL_TRIANGLES, 0, 6);
+    //glfwSwapBuffers(g_window);
 }
 
 
@@ -354,31 +354,19 @@ inline bool renderPlane(){
     setupPlaneBuffers();
 
     //textures
-    string map_Kd_filename = "../teapot/brick-pink.png";
-
-    unsigned width, height;
-    vector<unsigned char> map_Kd_image;
-    unsigned error = lodepng::decode(map_Kd_image, width, height, map_Kd_filename.c_str());
-    if(error){
-        cout << "decoder error " << error << ": " << lodepng_error_text(error) << endl;
-    }
-    assert(map_Kd_image.size() == 512 * 512 * 4);
-    GLubyte *map_Kd_data = (GLubyte *)malloc(sizeof(GLubyte) * 512 * 512 * 4);
-    for(int i = 0; i < map_Kd_image.size(); i++){
-        map_Kd_data[i] = map_Kd_image[i];
-    }
-
-    if(!g_render_buffer->Initialize(true)) printf("not ready\n");
+    g_render_buffer->Initialize(true);
+    g_render_buffer->Resize(4, g_screen_width, g_screen_height);
     if(!g_render_buffer->IsComplete()){
         printf("buffer not complete\n"); return false;
     }
 printf("texture ID of render buffer = %d\n", g_render_buffer->GetTextureID());
-//printf("texture ID = %d\n", map_Kd.GetID());
 
-    glActiveTexture(GL_TEXTURE1);
-    g_render_buffer->BindTexture(GL_TEXTURE1);
-    GLint texLoc = glGetUniformLocation(g_plane_program->GetID(), "map_Kd");
-    glUniform1i(texLoc, g_render_buffer->GetTextureID());
+    //glActiveTexture(GL_TEXTURE1);
+    //glBindTexture(GL_TEXTURE_2D, g_render_buffer->GetTextureID());
+    //g_render_buffer->BindTexture(1);
+    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, g_render_buffer->GetTextureID(),0);
+    //GLint texLoc = glGetUniformLocation(g_plane_program->GetID(), "map_Kd");
+    //glUniform1i(texLoc, g_render_buffer->GetTextureID());
 
     return true;
 }
@@ -545,7 +533,7 @@ int main(int argc, char *argv[]){
     glfwSwapInterval(1);
 
     renderTeapot();
-    renderPlane();
+    //renderPlane();
 
    glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(g_window)){
