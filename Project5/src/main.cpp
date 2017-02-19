@@ -95,10 +95,10 @@ void setPlaneModelViewProjectionMatrix(){
     float aspect = (float)g_plane_width/(float)g_plane_height;
     g_plane_projection_matrix.SetIdentity();
     g_plane_projection_matrix.SetPerspective(PI/3, aspect, 10, -0);
-//printf("%f %f %f %f\n %f %f %f %f\n %f %f %f %f\n %f %f %f %f\n", g_plane_projection_matrix.data[0],g_plane_projection_matrix.data[1],g_plane_projection_matrix.data[2],g_plane_projection_matrix.data[3],g_plane_projection_matrix.data[4],g_plane_projection_matrix.data[5],g_plane_projection_matrix.data[6],g_plane_projection_matrix.data[7],g_plane_projection_matrix.data[8],g_plane_projection_matrix.data[9],g_plane_projection_matrix.data[10],g_plane_projection_matrix.data[11],g_plane_projection_matrix.data[12],g_plane_projection_matrix.data[13],g_plane_projection_matrix.data[14],g_plane_projection_matrix.data[15]);
     g_plane_model_view_matrix = g_plane_view_matrix * g_plane_model_matrix;
     g_plane_model_view_projection_matrix = g_plane_projection_matrix * g_plane_view_matrix * g_plane_model_matrix;
 
+    glUseProgram(g_plane_program->GetID());
     g_plane_program->SetUniformMatrix4(0, g_plane_model_view_projection_matrix.data);
 }
 
@@ -128,6 +128,7 @@ void setTeapotModelViewProjectionMatrix(){
     rx.SetRotation(Point3f(0, 1, 0), g_light_record_coord.x);
     g_light_rotation_matrix = rx * rz;
 
+    glUseProgram(g_teapot_program->GetID());
     g_teapot_program->SetUniform(0, g_light_position);
     g_teapot_program->SetUniformMatrix4(1, g_teapot_model_view_projection_matrix.data);
     g_teapot_program->SetUniformMatrix4(2, g_teapot_normal_transform_matrix.data);
@@ -224,18 +225,21 @@ void setupTeapotBuffers(){
 
 
 void onDisplay(){
-    //g_render_buffer->Bind();
+    g_render_buffer->Bind();
     glUseProgram(g_teapot_program->GetID());
     glBindVertexArray(g_teapot_VAO);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glEnableVertexAttribArray(teapot_vertex_position_location);
+    glEnableVertexAttribArray(teapot_vertex_normal_location);
+    glEnableVertexAttribArray(teapot_vertex_texcoord_location);
     glDrawArrays(GL_TRIANGLES, 0, g_mesh->NF() * 3);
-    //g_render_buffer->Unbind();
+    g_render_buffer->Unbind();
 
     glUseProgram(g_plane_program->GetID());
     glBindVertexArray(g_plane_VAO);
-    //glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-    //glClearColor(0.0f, 0.0f, 0.0f ,1.0f);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.0f, 0.0f, 0.0f ,1.0f);
     glEnableVertexAttribArray(plane_vertex_position_location);
     glEnableVertexAttribArray(plane_vertex_texcoord_location);
     glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -268,7 +272,7 @@ void cursor_position_callback(GLFWwindow *window, double xpos, double ypos){
         g_light_record_coord.x = xpos;
         g_light_record_coord.y = ypos;
     }
-    //setPlaneModelViewProjectionMatrix();
+    setPlaneModelViewProjectionMatrix();
     setTeapotModelViewProjectionMatrix();
 }
 
@@ -326,7 +330,7 @@ void mouse_button_callback(GLFWwindow *window,int button, int action, int mods){
             g_teapot_dist_record = false;
         }
     }
-    //setPlaneModelViewProjectionMatrix();
+    setPlaneModelViewProjectionMatrix();
     setTeapotModelViewProjectionMatrix();
 }
 
@@ -359,10 +363,7 @@ inline bool renderPlane(){
     if(!g_render_buffer->IsComplete()){
         printf("buffer not complete\n"); return false;
     }
-printf("texture ID of render buffer = %d\n", g_render_buffer->GetTextureID());
-//printf("texture ID = %d\n", map_Kd.GetID());
 
-    glActiveTexture(GL_TEXTURE1);
     g_render_buffer->BindTexture(4);
     GLint texLoc = glGetUniformLocation(g_plane_program->GetID(), "map_Kd");
     glUniform1i(texLoc, g_render_buffer->GetTextureID());
@@ -466,9 +467,6 @@ inline void renderTeapot() {
     glUniform1i(texLoc, map_Kd.GetID());
     texLoc = glGetUniformLocation(g_teapot_program->GetID(), "map_Ks");
     glUniform1i(texLoc, map_Ks.GetID());
-printf("texture ID of map_Ka = %d\n", map_Ka.GetID());
-printf("texture ID of map_Kd = %d\n", map_Kd.GetID());
-printf("texture ID of map_Ks = %d\n", map_Ks.GetID());
 
     map_Ka.Bind(0);
     map_Kd.Bind(1);
