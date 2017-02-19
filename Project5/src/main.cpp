@@ -224,7 +224,7 @@ void setupTeapotBuffers(){
 
 
 void onDisplay(){
-    g_render_buffer->Bind();
+    //g_render_buffer->Bind();
     glUseProgram(g_teapot_program->GetID());
     glBindVertexArray(g_teapot_VAO);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -232,14 +232,14 @@ void onDisplay(){
     glDrawArrays(GL_TRIANGLES, 0, g_mesh->NF() * 3);
     //g_render_buffer->Unbind();
 
-    //glUseProgram(g_plane_program->GetID());
-    //glBindVertexArray(g_plane_VAO);
+    glUseProgram(g_plane_program->GetID());
+    glBindVertexArray(g_plane_VAO);
     //glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     //glClearColor(0.0f, 0.0f, 0.0f ,1.0f);
-    //glEnableVertexAttribArray(plane_vertex_position_location);
-    //glEnableVertexAttribArray(plane_vertex_texcoord_location);
-    //glDrawArrays(GL_TRIANGLES, 0, 6);
-    //glfwSwapBuffers(g_window);
+    glEnableVertexAttribArray(plane_vertex_position_location);
+    glEnableVertexAttribArray(plane_vertex_texcoord_location);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glfwSwapBuffers(g_window);
 }
 
 
@@ -360,13 +360,12 @@ inline bool renderPlane(){
         printf("buffer not complete\n"); return false;
     }
 printf("texture ID of render buffer = %d\n", g_render_buffer->GetTextureID());
+//printf("texture ID = %d\n", map_Kd.GetID());
 
-    //glActiveTexture(GL_TEXTURE1);
-    //glBindTexture(GL_TEXTURE_2D, g_render_buffer->GetTextureID());
-    //g_render_buffer->BindTexture(1);
-    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, g_render_buffer->GetTextureID(),0);
-    //GLint texLoc = glGetUniformLocation(g_plane_program->GetID(), "map_Kd");
-    //glUniform1i(texLoc, g_render_buffer->GetTextureID());
+    glActiveTexture(GL_TEXTURE1);
+    g_render_buffer->BindTexture(4);
+    GLint texLoc = glGetUniformLocation(g_plane_program->GetID(), "map_Kd");
+    glUniform1i(texLoc, g_render_buffer->GetTextureID());
 
     return true;
 }
@@ -533,7 +532,7 @@ int main(int argc, char *argv[]){
     glfwSwapInterval(1);
 
     renderTeapot();
-    //renderPlane();
+    renderPlane();
 
    glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(g_window)){
