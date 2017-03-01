@@ -517,12 +517,15 @@ void cursor_position_callback(GLFWwindow *window, double xpos, double ypos){
     setTeapotModelViewProjectionMatrix();*/
     if(g_cube_angle_record){
         Matrix4<float> rz;
-        rz.SetRotation(Point3f(1, 0, 0), ypos - g_cube_angle_record_coord.y);
+        rz.SetRotation(Point3f(1, 0, 0), (ypos - g_cube_angle_record_coord.y) * 3.14 / 180);
         Matrix4<float> rx;
-        rx.SetRotation(Point3f(0, 1, 0), xpos - g_cube_angle_record_coord.x);
+        rx.SetRotation(Point3f(0, 1, 0), (xpos - g_cube_angle_record_coord.x) * 3.14 / 180);
         g_cube_mouse_rotation_matrix = rx * rz;
+        g_sphere_mouse_rotation_matrix = rx * rz;
+        g_sphere_mouse_rotation_matrix.Invert();
     }
     setCubeModelViewProjectionMatrix();
+    setSphereModelViewProjectionMatrix();
 }
 
 void mouse_button_callback(GLFWwindow *window,int button, int action, int mods){
