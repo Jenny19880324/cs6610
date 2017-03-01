@@ -185,7 +185,7 @@ void setCubeModelViewProjectionMatrix(){
 }
 
 void setSphereModelViewProjectionMatrix(){
-    e = Point3f(0.0, 0.0, 8.0);
+    e = Point3f(0.0, 0.0, 40.0);
     g = Point3f(0.0, 0.0, -1.0);
     Point3f w = -g / g.Length();
     Point3f u = t.Cross(w) / (t.Cross(w)).Length();
@@ -198,7 +198,7 @@ void setSphereModelViewProjectionMatrix(){
     g_sphere_model_matrix = g_sphere_mouse_rotation_matrix * g_sphere_model_matrix;
     float aspect = (float)g_screen_width / (float)g_screen_height;
     g_sphere_projection_matrix.SetIdentity();
-    g_sphere_projection_matrix.SetPerspective(PI/3, aspect, 0, -20);
+    g_sphere_projection_matrix.SetPerspective(PI/3, aspect, 20, -20);
     g_sphere_model_view_matrix = g_sphere_view_matrix * g_sphere_model_matrix;
     g_sphere_model_view_projection_matrix = g_sphere_projection_matrix * g_sphere_view_matrix * g_sphere_model_matrix;
     Matrix4<float> temp = g_sphere_model_view_matrix.GetInverse();
@@ -206,18 +206,10 @@ void setSphereModelViewProjectionMatrix(){
 
     glUseProgram(g_sphere_program->GetID());
 
-    g_sphere_model_view_projection_matrix.SetIdentity();
-    g_sphere_model_view_projection_matrix = g_sphere_model_view_projection_matrix * 0.001;
-    g_sphere_model_view_projection_matrix.data[15] = 1;
     g_sphere_program->SetUniformMatrix4(1, g_sphere_model_view_projection_matrix.data);
-    g_sphere_program->SetUniformMatrix4(2, g_sphere_model_view_matrix.data);
-    g_sphere_program->SetUniformMatrix4(3, g_sphere_normal_transform_matrix.data);
+    g_sphere_program->SetUniformMatrix4(2, g_sphere_normal_transform_matrix.data);
+    g_sphere_program->SetUniformMatrix4(3, g_sphere_model_view_matrix.data);
 
-
-printf("%f %f %f %f\n", g_sphere_model_view_projection_matrix.data[0],g_sphere_model_view_projection_matrix.data[4],g_sphere_model_view_projection_matrix[8],g_sphere_model_view_projection_matrix[12]);
-printf("%f %f %f %f\n", g_sphere_model_view_projection_matrix.data[1],g_sphere_model_view_projection_matrix.data[5],g_sphere_model_view_projection_matrix[9],g_sphere_model_view_projection_matrix[13]);
-printf("%f %f %f %f\n", g_sphere_model_view_projection_matrix.data[2],g_sphere_model_view_projection_matrix.data[6],g_sphere_model_view_projection_matrix[10],g_sphere_model_view_projection_matrix[14]);
-printf("%f %f %f %f\n", g_sphere_model_view_projection_matrix.data[3],g_sphere_model_view_projection_matrix.data[7],g_sphere_model_view_projection_matrix[11],g_sphere_model_view_projection_matrix[15]);
 }
 
 void setupPlaneBuffers(){
