@@ -34,8 +34,8 @@ GLSLProgram *g_sphere_program;
 GLRenderBuffer2D *g_render_buffer;
 int g_screen_width = 800;
 int g_screen_height = 600;
-float g_plane_width = 2.0;
-float g_plane_height = 2.0;
+float g_plane_width = 10.0;
+float g_plane_height = 10.0;
 //Bounding Box
 Point3f g_minV(FLT_MAX, FLT_MAX, FLT_MAX);
 Point3f g_maxV(FLT_MIN, FLT_MIN, FLT_MIN);
@@ -73,6 +73,7 @@ Matrix4<float> g_plane_view_matrix;
 Matrix4<float> g_plane_model_matrix;
 Matrix4<float> g_plane_projection_matrix;
 Matrix4<float> g_plane_model_view_matrix;
+Matrix4<float> g_plane_normal_transform_matrix;
 Matrix4<float> g_plane_model_view_projection_matrix;
 Matrix4<float> g_plane_mouse_rotation_matrix;
 Matrix4<float> g_cube_view_matrix;
@@ -95,6 +96,7 @@ GLint teapot_vertex_position_location;
 GLint teapot_vertex_normal_location;
 GLint teapot_vertex_texcoord_location;
 GLint plane_vertex_texcoord_location;
+GLint plane_vertex_normal_location;
 GLint plane_vertex_position_location;
 GLint cube_vertex_position_location;
 GLint sphere_vertex_position_location;
@@ -110,8 +112,7 @@ GLTextureCubeMap g_cubemap;
 TriMesh::Mtl g_mtl;
 ////////////////////////////////////////////////////////////////////////////////
 void setPlaneModelViewProjectionMatrix(){
-    //transformation
-    e = Point3f(0.0, 0.0, g_plane_dist);
+    e = Point3f(0.0, 10.0, 40);
     g = Point3f(0.0, 0.0, -1.0);
     Point3f w = -g / g.Length();
     Point3f u = t.Cross(w) / (t.Cross(w)).Length();
@@ -123,12 +124,23 @@ void setPlaneModelViewProjectionMatrix(){
     g_plane_model_matrix = g_plane_mouse_rotation_matrix * g_plane_model_matrix;
     float aspect = (float)g_plane_width/(float)g_plane_height;
     g_plane_projection_matrix.SetIdentity();
-    g_plane_projection_matrix.SetPerspective(PI/3, aspect, 10, -0);
+    g_plane_projection_matrix.SetPerspective(PI/3, aspect, 20, -20);
     g_plane_model_view_matrix = g_plane_view_matrix * g_plane_model_matrix;
     g_plane_model_view_projection_matrix = g_plane_projection_matrix * g_plane_view_matrix * g_plane_model_matrix;
 
     glUseProgram(g_plane_program->GetID());
+
+    g_plane_model_view_projection_matrix.SetIdentity();
+    g_plane_normal_transform_matrix.SetIdentity();
+    g_plane_model_view_matrix.SetIdentity();
+printf("%f %f %f %f\n",g_plane_model_view_projection_matrix.data[0],g_plane_model_view_projection_matrix.data[4],g_plane_model_view_projection_matrix.data[8],g_plane_model_view_projection_matrix.data[12]);
+printf("%f %f %f %f\n",g_plane_model_view_projection_matrix.data[1],g_plane_model_view_projection_matrix.data[5],g_plane_model_view_projection_matrix.data[9],g_plane_model_view_projection_matrix.data[13]);
+printf("%f %f %f %f\n",g_plane_model_view_projection_matrix.data[2],g_plane_model_view_projection_matrix.data[6],g_plane_model_view_projection_matrix.data[10],g_plane_model_view_projection_matrix.data[14]);
+printf("%f %f %f %f\n",g_plane_model_view_projection_matrix.data[3],g_plane_model_view_projection_matrix.data[7],g_plane_model_view_projection_matrix.data[11],g_plane_model_view_projection_matrix.data[15]);
+
     g_plane_program->SetUniformMatrix4(0, g_plane_model_view_projection_matrix.data);
+    g_plane_program->SetUniformMatrix4(1, g_plane_normal_transform_matrix.data);
+    g_plane_program->SetUniformMatrix4(2, g_plane_model_view_matrix.data);
 }
 
 
@@ -216,23 +228,35 @@ void setSphereModelViewProjectionMatrix(){
 
 void setupPlaneBuffers(){
     Point3f *vertex_data = (Point3f *)malloc(sizeof(Point3f) * 6);
+    Point3f *normal_data = (Point3f *)malloc(sizeof(Point3f) * 6);
     Point2f *texcoord_data = (Point2f *)malloc(sizeof(Point2f) * 6);
-    vertex_data[0] = Point3f(-1.0, -1.0, 0);
-    vertex_data[1] = Point3f( 1.0, -1.0, 0);
-    vertex_data[2] = Point3f(-1.0,  1.0, 0);
-    vertex_data[3] = Point3f( 1.0, -1.0, 0);
-    vertex_data[4] = Point3f( 1.0,  1.0, 0);
-    vertex_data[5] = Point3f(-1.0,  1.0, 0);
+    //vertex_data[0] = Point3f(-10.0, 0.0, -10.0);
+    //vertex_data[1] = Point3f(-10.0, 0.0,  10.0);
+    //vertex_data[2] = Point3f( 10.0, 0.0, -10.0);
+    //vertex_data[3] = Point3f(-10.0, 0.0,  10.0);
+    //vertex_data[4] = Point3f( 10.0, 0.0,  10.0);
+    //vertex_data[5] = Point3f( 10.0, 0.0, -10.0);
+
+    vertex_data[0] = Point3f(-0.1, -0.1, 0.0);
+    vertex_data[1] = Point3f( 0.1, -0.1, 0.0);
+    vertex_data[2] = Point3f(-0.1,  0.1, 0.0);
+    vertex_data[3] = Point3f( 0.1, -0.1, 0.0);
+    vertex_data[4] = Point3f( 0.1,  0.1, 0.0);
+    vertex_data[5] = Point3f(-0.1,  0.1, 0.0);
+
+    normal_data[0] = Point3f(0, 1, 0);
+    normal_data[1] = Point3f(0, 1, 0);
+    normal_data[2] = Point3f(0, 1, 0);
+    normal_data[3] = Point3f(0, 1, 0);
+    normal_data[4] = Point3f(0, 1, 0);
+    normal_data[5] = Point3f(0, 1, 0);
 
     texcoord_data[0] = Point2f(0.0, 0.0);
-    texcoord_data[1] = Point2f(1.0, 0.0);
-    texcoord_data[2] = Point2f(0.0, 1.0);
-    texcoord_data[3] = Point2f(1.0, 0.0);
+    texcoord_data[1] = Point2f(0.0, 1.0);
+    texcoord_data[2] = Point2f(1.0, 0.0);
+    texcoord_data[3] = Point2f(0.0, 1.0);
     texcoord_data[4] = Point2f(1.0, 1.0);
-    texcoord_data[5] = Point2f(0.0, 1.0);
-
-    g_plane_width = 2.0;
-    g_plane_height = 2.0;
+    texcoord_data[5] = Point2f(1.0, 0.0);
 
     //Generate a vertex buffer
     GLuint vertex_position_buffer;
@@ -243,6 +267,15 @@ void setupPlaneBuffers(){
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer);
     glVertexAttribPointer(plane_vertex_position_location, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
+    //Generate a normal buffer
+    GLuint vertex_normal_buffer;
+    glGenBuffers(1, &vertex_normal_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Point3f) * 6, normal_data, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(plane_vertex_normal_location);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer);
+    glVertexAttribPointer(plane_vertex_normal_location, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
     //Generate a texture coordinate buffer
     GLuint vertex_texcoord_buffer;
     glGenBuffers(1, &vertex_texcoord_buffer);
@@ -252,8 +285,9 @@ void setupPlaneBuffers(){
     glBindBuffer(GL_ARRAY_BUFFER, vertex_texcoord_buffer);
     glVertexAttribPointer(plane_vertex_texcoord_location, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
-    free(vertex_data);
-    free(texcoord_data);
+    //free(vertex_data);
+    //free(normal_data);
+    //free(texcoord_data);
 }
 
 void setupTeapotBuffers(){
@@ -461,15 +495,7 @@ void onDisplay(){
     //glDrawArrays(GL_TRIANGLES, 0, g_mesh->NF() * 3);
     //g_render_buffer->Unbind();
 
-    //glUseProgram(g_plane_program->GetID());
-    //glBindVertexArray(g_plane_VAO);
-    //glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-    //glClearColor(0.0f, 0.0f, 0.0f ,1.0f);
-    //glEnableVertexAttribArray(plane_vertex_position_location);
-    //glEnableVertexAttribArray(plane_vertex_texcoord_location);
-    //glDrawArrays(GL_TRIANGLES, 0, 6);
-
-    glDepthFunc(GL_ALWAYS);
+    /*glDepthFunc(GL_ALWAYS);
     glUseProgram(g_cube_program->GetID());
     glBindVertexArray(g_cube_VAO);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -482,7 +508,18 @@ void onDisplay(){
     glBindVertexArray(g_sphere_VAO);
     glEnableVertexAttribArray(sphere_vertex_position_location);
     glEnableVertexAttribArray(sphere_vertex_normal_location);
-    glDrawArrays(GL_TRIANGLES, 0, g_sphere->NF() * 3);
+    glDrawArrays(GL_TRIANGLES, 0, g_sphere->NF() * 3);*/
+
+    glDepthFunc(GL_ALWAYS);
+    glUseProgram(g_plane_program->GetID());
+    glBindVertexArray(g_plane_VAO);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glEnableVertexAttribArray(plane_vertex_position_location);
+    glEnableVertexAttribArray(plane_vertex_normal_location);
+    glEnableVertexAttribArray(plane_vertex_texcoord_location);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
     glfwSwapBuffers(g_window);
 }
 
@@ -616,27 +653,33 @@ inline bool renderPlane(){
     g_plane_program = new GLSLProgram();
     g_plane_program->BuildFiles("../glsl/plane.vert", "../glsl/plane.frag");
     g_plane_program->RegisterUniform(0, "modelViewProjection");
+    g_plane_program->RegisterUniform(1, "normalTransform");
+    g_plane_program->RegisterUniform(2, "modelView");
     g_plane_program->Bind();
     plane_vertex_position_location = glGetAttribLocation(g_plane_program->GetID(), "pos");
+    plane_vertex_normal_location = glGetAttribLocation(g_plane_program->GetID(), "inputNormal");
     plane_vertex_texcoord_location = glGetAttribLocation(g_plane_program->GetID(), "inputTexCoord");
     setPlaneModelViewProjectionMatrix();
     setupPlaneBuffers();
 
-    //textures
-    g_render_buffer->Initialize(true);
-    g_render_buffer->Resize(4, g_screen_width, g_screen_height);
-   if(!g_render_buffer->IsComplete()){
-        printf("buffer not complete\n"); return false;
-    }
+    //setCubeMap();
+    //g_cubemap.Bind(0);
 
-    g_render_buffer->BindTexture(4);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-    GLint texLoc = glGetUniformLocation(g_plane_program->GetID(), "map_Kd");
-    glUniform1i(texLoc, g_render_buffer->GetTextureID());
-    g_render_buffer->BuildTextureMipmaps();
-    g_render_buffer->SetTextureMaxAnisotropy();
-    g_render_buffer->SetTextureFilteringMode(GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST);
+    //textures
+    //g_render_buffer->Initialize(true);
+    //g_render_buffer->Resize(4, g_screen_width, g_screen_height);
+   //if(!g_render_buffer->IsComplete()){
+    //    printf("buffer not complete\n"); return false;
+    //}
+
+    //g_render_buffer->BindTexture(4);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+    //GLint texLoc = glGetUniformLocation(g_plane_program->GetID(), "map_Kd");
+    //glUniform1i(texLoc, g_render_buffer->GetTextureID());
+    //g_render_buffer->BuildTextureMipmaps();
+    //g_render_buffer->SetTextureMaxAnisotropy();
+    //g_render_buffer->SetTextureFilteringMode(GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST);
 
     return true;
 }
@@ -646,7 +689,6 @@ inline void renderTeapot() {
     glGenVertexArrays(1, &g_teapot_VAO);
     glBindVertexArray(g_teapot_VAO);
 
-    g_render_buffer = new GLRenderBuffer2D();
     g_teapot_program = new GLSLProgram();
     g_teapot_program->BuildFiles("../glsl/teapot.vert", "../glsl/teapot.frag");
     g_teapot_program->RegisterUniform(0, "lightPosition");
@@ -773,6 +815,8 @@ inline void renderCube() {
 
 
 inline void renderSphere(){
+    g_render_buffer = new GLRenderBuffer2D();
+
     g_sphere = new TriMesh();
     if(!g_sphere->LoadFromFileObj("../teapot.obj", true)){
         cerr << "failure of loading the obj file" << endl;
@@ -860,16 +904,16 @@ int main(int argc, char *argv[]){
         exit(EXIT_FAILURE);
     }
     glfwSetKeyCallback(g_window, key_callback);
-    glfwSetCursorPosCallback(g_window, cursor_position_callback);
-    glfwSetMouseButtonCallback(g_window, mouse_button_callback);
+    //glfwSetCursorPosCallback(g_window, cursor_position_callback);
+    //glfwSetMouseButtonCallback(g_window, mouse_button_callback);
     glfwMakeContextCurrent(g_window);
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
     glfwSwapInterval(1);
 
     //renderTeapot();
-    //renderPlane();
-    renderCube();
-    renderSphere();
+    //renderCube();
+    //renderSphere();
+    renderPlane();
 
     glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(g_window)){
