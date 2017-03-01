@@ -187,7 +187,7 @@ void setCubeModelViewProjectionMatrix(){
 }
 
 void setSphereModelViewProjectionMatrix(){
-    e = Point3f(0.0, 0.0, 40.0);
+    e = Point3f(0.0, 10.0, 40.0);
     g = Point3f(0.0, 0.0, -1.0);
     Point3f w = -g / g.Length();
     Point3f u = t.Cross(w) / (t.Cross(w)).Length();
