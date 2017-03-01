@@ -25,6 +25,7 @@ using namespace cy;
 ////////////////////////////////////////////////////////////////////////////////
 TriMesh *g_mesh;
 TriMesh *g_cube;
+TriMesh *g_sphere;
 GLFWwindow *g_window;
 GLSLProgram *g_teapot_program;
 GLSLProgram *g_plane_program;
@@ -184,7 +185,7 @@ void setCubeModelViewProjectionMatrix(){
 }
 
 void setSphereModelViewProjectionMatrix(){
-    e = Point3f(0.0, 0.0, 0.0);
+    e = Point3f(0.0, 0.0, 8.0);
     g = Point3f(0.0, 0.0, -1.0);
     Point3f w = -g / g.Length();
     Point3f u = t.Cross(w) / (t.Cross(w)).Length();
@@ -197,12 +198,26 @@ void setSphereModelViewProjectionMatrix(){
     g_sphere_model_matrix = g_sphere_mouse_rotation_matrix * g_sphere_model_matrix;
     float aspect = (float)g_screen_width / (float)g_screen_height;
     g_sphere_projection_matrix.SetIdentity();
-    g_sphere_projection_matrix.SetPerspective(PI/3, aspect, 0, 10);
+    g_sphere_projection_matrix.SetPerspective(PI/3, aspect, 0, -20);
     g_sphere_model_view_matrix = g_sphere_view_matrix * g_sphere_model_matrix;
     g_sphere_model_view_projection_matrix = g_sphere_projection_matrix * g_sphere_view_matrix * g_sphere_model_matrix;
+    Matrix4<float> temp = g_sphere_model_view_matrix.GetInverse();
+    g_sphere_normal_transform_matrix = temp.GetTranspose();
 
     glUseProgram(g_sphere_program->GetID());
-    g_sphere_program->SetUniformMatrix4(0, g_sphere_model_view_projection_matrix.data);
+
+    g_sphere_model_view_projection_matrix.SetIdentity();
+    g_sphere_model_view_projection_matrix = g_sphere_model_view_projection_matrix * 0.001;
+    g_sphere_model_view_projection_matrix.data[15] = 1;
+    g_sphere_program->SetUniformMatrix4(1, g_sphere_model_view_projection_matrix.data);
+    g_sphere_program->SetUniformMatrix4(2, g_sphere_model_view_matrix.data);
+    g_sphere_program->SetUniformMatrix4(3, g_sphere_normal_transform_matrix.data);
+
+
+printf("%f %f %f %f\n", g_sphere_model_view_projection_matrix.data[0],g_sphere_model_view_projection_matrix.data[4],g_sphere_model_view_projection_matrix[8],g_sphere_model_view_projection_matrix[12]);
+printf("%f %f %f %f\n", g_sphere_model_view_projection_matrix.data[1],g_sphere_model_view_projection_matrix.data[5],g_sphere_model_view_projection_matrix[9],g_sphere_model_view_projection_matrix[13]);
+printf("%f %f %f %f\n", g_sphere_model_view_projection_matrix.data[2],g_sphere_model_view_projection_matrix.data[6],g_sphere_model_view_projection_matrix[10],g_sphere_model_view_projection_matrix[14]);
+printf("%f %f %f %f\n", g_sphere_model_view_projection_matrix.data[3],g_sphere_model_view_projection_matrix.data[7],g_sphere_model_view_projection_matrix[11],g_sphere_model_view_projection_matrix[15]);
 }
 
 void setupPlaneBuffers(){
@@ -242,6 +257,9 @@ void setupPlaneBuffers(){
     glEnableVertexAttribArray(plane_vertex_texcoord_location);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_texcoord_buffer);
     glVertexAttribPointer(plane_vertex_texcoord_location, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+    free(vertex_data);
+    free(texcoord_data);
 }
 
 void setupTeapotBuffers(){
@@ -319,19 +337,19 @@ void setupCubeBuffers(){
 
 void setupSphereBuffers(){
     Point3f *vertex_data = (Point3f *)malloc(sizeof(Point3f) * g_sphere->NF() * 3);
-    Point3f *texcoord_data = (Point3f *)malloc(sizeof(Point3f) * g_sphere->NF() * 3);
+    Point3f *normal_data = (Point3f *)malloc(sizeof(Point3f) * g_sphere->NF() * 3);
     for(int i = 0; i < g_sphere->NF(); i++){
         vertex_data[i * 3 + 0] = g_sphere->V(g_sphere->F(i).v[0]);
         vertex_data[i * 3 + 1] = g_sphere->V(g_sphere->F(i).v[1]);
         vertex_data[i * 3 + 2] = g_sphere->V(g_sphere->F(i).v[2]);
 
+//printf("vertex = (%f %f %f)\n", vertex_data[i * 3 + 0].x, vertex_data[i * 3 + 0].y, vertex_data[i * 3 + 0].z);
+//printf("vertex = (%f %f %f)\n", vertex_data[i * 3 + 1].x, vertex_data[i * 3 + 1].y, vertex_data[i * 3 + 1].z);
+//printf("vertex = (%f %f %f)\n", vertex_data[i * 3 + 2].x, vertex_data[i * 3 + 2].y, vertex_data[i * 3 + 2].z);
+
         normal_data[i * 3 + 0] = g_sphere->VN(g_sphere->FN(i).v[0]);
         normal_data[i * 3 + 1] = g_sphere->VN(g_sphere->FN(i).v[1]);
-        normal_data[i ( 3 + 2] = g_sphere->VN(g_sphere->FN(i).v[2]);
-
-        texcoord_data[i * 3 + 0] = g_sphere->VT(g_sphere->FT(i).v[0]);
-        texcoord_data[i * 3 + 1] = g_sphere->VT(g_sphere->FT(i).v[1]);
-        texcoord_data[i * 3 + 2] = g_sphere->VT(g_sphere->FT(i).v[2]);
+        normal_data[i * 3 + 2] = g_sphere->VN(g_sphere->FN(i).v[2]);
     }
 
     //Generate a vertex buffer
@@ -340,28 +358,23 @@ void setupSphereBuffers(){
     glGenBuffers(1, &vertex_position_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(Point3f) * g_sphere->NF() * 3, vertex_data, GL_STATIC_DRAW);
-    glEnableVetexAttribArray(sphere_vertex_position_location);
-    glBindBuffer(GL_ARRAY_BUFFER, vetex_position_buffer);
+    glEnableVertexAttribArray(sphere_vertex_position_location);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer);
     glVertexAttribPointer(sphere_vertex_position_location, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
     //Generate a normal buffer
     GLuint vertex_normal_buffer;
     glGenBuffers(1, &vertex_normal_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Point3f) * g_cube->NF() * 3, normal_data, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Point3f) * g_sphere->NF() * 3, normal_data, GL_STATIC_DRAW);
     glEnableVertexAttribArray(sphere_vertex_normal_location);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer);
     glVertexAttribPointer(sphere_vertex_normal_location, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-    //Generate texture coordinate buffer
-    GLuint vertex_texcoord_buffer;
-    glGenBuffers(1, &vertex_texcoord_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_texcoord_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Point3f) * g_sphere->NF() * 3 , texcoord_data, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(sphere_vertex_texcoord_location);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_texcoord_buffer);
-    glVertexAttribPointer(sphere_vertex_texcoord_location, 3, GL_FLOAT, GL_FALSE< 0, 0);
+    free(vertex_data);
+    free(normal_data);
 }
+
 
 void onDisplay(){
     //g_render_buffer->Bind();
@@ -383,21 +396,22 @@ void onDisplay(){
     //glEnableVertexAttribArray(plane_vertex_texcoord_location);
     //glDrawArrays(GL_TRIANGLES, 0, 6);
 
-    glDepthFunc(GL_ALWAYS);
+    /*glDepthFunc(GL_ALWAYS);
     glUseProgram(g_cube_program->GetID());
     glBindVertexArray(g_cube_VAO);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glEnableVertexAttribArray(cube_vertex_position_location);
-    glDrawArrays(GL_TRIANGLES, 0, g_cube->NF() * 3);
+    glDrawArrays(GL_TRIANGLES, 0, g_cube->NF() * 3);*/
 
-    glDepthFunc(GL_LESS);
+    //glDepthFunc(GL_LESS);
     glUseProgram(g_sphere_program->GetID());
     glBindVertexArray(g_sphere_VAO);
-    glEnableVertexAttribArray(sphere_vertex_position_locaton);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glEnableVertexAttribArray(sphere_vertex_position_location);
     glEnableVertexAttribArray(sphere_vertex_normal_location);
-    glEnableVertexAttribArray(sphere_vertex_texcoord_location);
-    glDrawArrays(GL_TRIANGLES, 0, g_sphere->NF() * 3);
+    glDrawArrays(GL_TRIANGLES, 0, 3000 /*g_sphere->NF() * 3*/);
     glfwSwapBuffers(g_window);
 }
 
@@ -654,9 +668,9 @@ inline void renderTeapot() {
     map_Kd.Bind(1);
     map_Ks.Bind(2);
 
-    //free(map_Ka_data);
-    //free(map_Kd_data);
-    //free(map_Ks_data);
+    free(map_Ka_data);
+    free(map_Kd_data);
+    free(map_Ks_data);
 
 }
 
@@ -761,10 +775,15 @@ inline void renderCube() {
     free(cubemap_negz_data);
     free(cubemap_posx_data);
     free(cubemap_posy_data);
-    free(cbuemap_posz_data);
+    free(cubemap_posz_data);
 }
 
 inline void renderSphere(){
+    g_sphere = new TriMesh();
+    if(!g_sphere->LoadFromFileObj("../sphere.obj", true)){
+        cerr << "failure of loading the obj file" << endl;
+    }
+
     //Generate and bind a vertex array object
     glGenVertexArrays(1, &g_sphere_VAO);
     glBindVertexArray(g_sphere_VAO);
@@ -783,7 +802,6 @@ inline void renderSphere(){
     g_sphere_program->Bind();
     sphere_vertex_position_location = glGetAttribLocation(g_sphere_program->GetID(), "pos");
     sphere_vertex_normal_location = glGetAttribLocation(g_sphere_program->GetID(), "inputNormal");
-    sphere_vertex_texcoord_location = glGetAttribLocation(g_sphere_program->GetID(), "inputTexCoord");
 
     Point3f p_Ka; p_Ka.Set(g_sphere->M(0).Ka);
     Point3f p_Kd; p_Kd.Set(g_sphere->M(0).Kd);
@@ -828,6 +846,7 @@ int main(int argc, char *argv[]){
     g_plane_mouse_rotation_matrix.SetIdentity();
     g_teapot_mouse_rotation_matrix.SetIdentity();
     g_cube_mouse_rotation_matrix.SetIdentity();
+    g_sphere_mouse_rotation_matrix.SetIdentity();
 
     //GLFW window
     glfwSetErrorCallback(error_callback);
@@ -844,16 +863,18 @@ int main(int argc, char *argv[]){
         exit(EXIT_FAILURE);
     }
     glfwSetKeyCallback(g_window, key_callback);
-    glfwSetCursorPosCallback(g_window, cursor_position_callback);
-    glfwSetMouseButtonCallback(g_window, mouse_button_callback);
+    //glfwSetCursorPosCallback(g_window, cursor_position_callback);
+    //glfwSetMouseButtonCallback(g_window, mouse_button_callback);
     glfwMakeContextCurrent(g_window);
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
     glfwSwapInterval(1);
 
     //renderTeapot();
     //renderPlane();
-    renderCube();
+    //renderCube();
+    renderSphere();
 
+    glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(g_window)){
         glViewport(0, 0, g_screen_width, g_screen_height);
         onDisplay();

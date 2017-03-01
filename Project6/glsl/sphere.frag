@@ -22,8 +22,9 @@ void main(void){
     float lambertian = max(dot(lightDir, normal), 0.0);
     float specAngle = max(dot(halfDir, normal), 0.0);
     float specular = pow(specAngle, Ns);
-    vec2 flippedTexCoord = texCoord * vec2(1.0, -1.0);
-    fragColor = vec4(Ka, 1.0) * texture(map_Ka, flippedTexCoord)
-              + vec4(Kd, 1.0) * texture(map_Kd, flippedTexCoord) * lambertian
-              + vec4(Ks, 1.0) * texture(map_Ks, flippedTexCoord) * specular;
+    fragColor = vec4(Ka, 1.0) * texture(cubemap, textureDir)
+              + vec4(Kd, 1.0) * texture(cubemap, textureDir) * lambertian
+              + vec4(Ks, 1.0) * texture(cubemap, textureDir) * specular;
+
+    fragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }
