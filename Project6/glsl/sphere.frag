@@ -25,6 +25,6 @@ void main(void){
     float specular = pow(specAngle, Ns);
     fragColor = vec4(Ka, 1.0) * texture(cubemap, textureDir)
               + vec4(Kd, 1.0) * texture(cubemap, textureDir) * lambertian
-              + vec4(Ks, 1.0) * specular;
+              + vec4(Ks, 1.0) * texture(cubemap, textureDir) * specular;
 
 }

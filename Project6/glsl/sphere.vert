@@ -11,9 +11,9 @@ uniform mat4 normalTransform;
 uniform mat4 modelView;
 
 void main(){
-    gl_Position = modelViewProjection * vec4(pos, 1.0);
-    vec4 vertPos4 = modelView * vec4(pos, 1.0);
+    gl_Position = modelViewProjection * vec4(pos + vec3(0, -6, 0), 1.0);
+    vec4 vertPos4 = modelView * vec4(pos + vec3(0, -6, 0), 1.0);
     vertPos = vec3(vertPos4) / vertPos4.w;
     normalInterp = (normalTransform * vec4(inputNormal, 0.0)).xyz;
-    textureDir = pos;
+    textureDir = pos + vec3(0, -6, 0);
 }

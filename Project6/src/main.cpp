@@ -806,7 +806,8 @@ inline void renderSphere(){
 
     setSphereModelViewProjectionMatrix();
     setupSphereBuffers();
-    setCubeMap();
+    g_cubemap.Bind(0);
+
 }
 
 int main(int argc, char *argv[]){
