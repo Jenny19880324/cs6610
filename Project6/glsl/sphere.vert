@@ -7,8 +7,8 @@ out vec3 vertPos;
 out vec3 textureDir;
 
 uniform mat4 modelViewProjection;
-uniform mat4 normalTransform;
 uniform mat4 modelView;
+uniform mat4 normalTransform;
 
 void main(){
     gl_Position = modelViewProjection * vec4(pos, 1.0);

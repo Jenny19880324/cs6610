@@ -43,7 +43,7 @@ Point3f g_centerV(0, 0, 0);
 Point3f g = Point3f(0.0, 0.0, -1.0); // gaze direction
 Point3f e = Point3f(0.0, 0.0, 0.0); // eye position
 Point3f t = Point3f(0.0, 1.0, 0.0); // view up direction
-Point3f g_light_position = Point3f(100, 0, 0);
+Point3f g_light_position = Point3f(0, 1, 0);
 
 float g_teapot_dist;
 float g_plane_dist = 6.0;
@@ -104,6 +104,8 @@ GLuint g_teapot_VAO;
 GLuint g_plane_VAO;
 GLuint g_cube_VAO;
 GLuint g_sphere_VAO;
+
+GLTextureCubeMap g_cubemap;
 
 TriMesh::Mtl g_mtl;
 ////////////////////////////////////////////////////////////////////////////////
@@ -335,10 +337,6 @@ void setupSphereBuffers(){
         vertex_data[i * 3 + 1] = g_sphere->V(g_sphere->F(i).v[1]);
         vertex_data[i * 3 + 2] = g_sphere->V(g_sphere->F(i).v[2]);
 
-//printf("vertex = (%f %f %f)\n", vertex_data[i * 3 + 0].x, vertex_data[i * 3 + 0].y, vertex_data[i * 3 + 0].z);
-//printf("vertex = (%f %f %f)\n", vertex_data[i * 3 + 1].x, vertex_data[i * 3 + 1].y, vertex_data[i * 3 + 1].z);
-//printf("vertex = (%f %f %f)\n", vertex_data[i * 3 + 2].x, vertex_data[i * 3 + 2].y, vertex_data[i * 3 + 2].z);
-
         normal_data[i * 3 + 0] = g_sphere->VN(g_sphere->FN(i).v[0]);
         normal_data[i * 3 + 1] = g_sphere->VN(g_sphere->FN(i).v[1]);
         normal_data[i * 3 + 2] = g_sphere->VN(g_sphere->FN(i).v[2]);
@@ -367,6 +365,89 @@ void setupSphereBuffers(){
     free(normal_data);
 }
 
+inline void setCubeMap(){
+    string cubemap_negx_filename = "../cubemap/cubemap_negx.png";
+    string cubemap_negy_filename = "../cubemap/cubemap_negy.png";
+    string cubemap_negz_filename = "../cubemap/cubemap_negz.png";
+    string cubemap_posx_filename = "../cubemap/cubemap_posx.png";
+    string cubemap_posy_filename = "../cubemap/cubemap_posy.png";
+    string cubemap_posz_filename = "../cubemap/cubemap_posz.png";
+
+    vector<unsigned char> cubemap_negx_image;
+    vector<unsigned char> cubemap_negy_image;
+    vector<unsigned char> cubemap_negz_image;
+    vector<unsigned char> cubemap_posx_image;
+    vector<unsigned char> cubemap_posy_image;
+    vector<unsigned char> cubemap_posz_image;
+
+    unsigned width, height;
+    unsigned error = lodepng::decode(cubemap_negx_image, width, height, cubemap_negx_filename.c_str());
+    if(error){
+        cout << "decoder error " << error << ":" << lodepng_error_text(error) << endl;
+    }
+    error = lodepng::decode(cubemap_negy_image, width, height, cubemap_negy_filename.c_str());
+    if(error){
+        cout << "decoder error" << error << ":" << lodepng_error_text(error) << endl;
+    }
+    error = lodepng::decode(cubemap_negz_image, width, height, cubemap_negz_filename.c_str());
+    if(error){
+        cout << "decoder error" << error << ":" << lodepng_error_text(error) << endl;
+    }
+    error = lodepng::decode(cubemap_posx_image, width, height, cubemap_posx_filename.c_str());
+    if(error){
+        cout << "decoder error " << error << ":" << lodepng_error_text(error) << endl;
+    }
+    error = lodepng::decode(cubemap_posy_image, width, height, cubemap_posy_filename.c_str());
+    if(error){
+        cout << "decoder error " << error << ":" << lodepng_error_text(error) << endl;
+    }
+    error = lodepng::decode(cubemap_posz_image, width, height, cubemap_posz_filename.c_str());
+    if(error){
+        cout << "decoder error " << error << ":" << lodepng_error_text(error) << endl;
+    }
+
+    assert(cubemap_negx_image.size() == 2048 * 2048 * 4);
+    assert(cubemap_negy_image.size() == 2048 * 2048 * 4);
+    assert(cubemap_negz_image.size() == 2048 * 2048 * 4);
+    assert(cubemap_posx_image.size() == 2048 * 2048 * 4);
+    assert(cubemap_posy_image.size() == 2048 * 2048 * 4);
+    assert(cubemap_posz_image.size() == 2048 * 2048 * 4);
+
+    GLubyte *cubemap_negx_data = (GLubyte *)malloc(sizeof(GLubyte) * 2048 * 2048 * 4);
+    GLubyte *cubemap_negy_data = (GLubyte *)malloc(sizeof(GLubyte) * 2048 * 2048 * 4);
+    GLubyte *cubemap_negz_data = (GLubyte *)malloc(sizeof(GLubyte) * 2048 * 2048 * 4);
+    GLubyte *cubemap_posx_data = (GLubyte *)malloc(sizeof(GLubyte) * 2048 * 2048 * 4);
+    GLubyte *cubemap_posy_data = (GLubyte *)malloc(sizeof(GLubyte) * 2048 * 2048 * 4);
+    GLubyte *cubemap_posz_data = (GLubyte *)malloc(sizeof(GLubyte) * 2048 * 2048 * 4);
+
+    for(int i = 0; i < cubemap_negx_image.size(); i++){
+        cubemap_negx_data[i] = cubemap_negx_image[i];
+        cubemap_negy_data[i] = cubemap_negy_image[i];
+        cubemap_negz_data[i] = cubemap_negz_image[i];
+        cubemap_posx_data[i] = cubemap_posx_image[i];
+        cubemap_posy_data[i] = cubemap_posy_image[i];
+        cubemap_posz_data[i] = cubemap_posz_image[i];
+    }
+
+    g_cubemap.Initialize();
+    g_cubemap.SetImageRGBA(cy::GLTextureCubeMap::POSITIVE_X, cubemap_posx_data, width, height);
+    g_cubemap.SetImageRGBA(cy::GLTextureCubeMap::POSITIVE_Y, cubemap_posy_data, width, height);
+    g_cubemap.SetImageRGBA(cy::GLTextureCubeMap::POSITIVE_Z, cubemap_posz_data, width, height);
+    g_cubemap.SetImageRGBA(cy::GLTextureCubeMap::NEGATIVE_X, cubemap_negx_data, width, height);
+    g_cubemap.SetImageRGBA(cy::GLTextureCubeMap::NEGATIVE_Y, cubemap_negy_data, width, height);
+    g_cubemap.SetImageRGBA(cy::GLTextureCubeMap::NEGATIVE_Z, cubemap_negz_data, width, height);
+    g_cubemap.BuildMipmaps();
+    g_cubemap.SetFilteringMode(GL_NEAREST, GL_LINEAR);
+
+    g_cubemap.Bind(0);
+
+    free(cubemap_negx_data);
+    free(cubemap_negy_data);
+    free(cubemap_negz_data);
+    free(cubemap_posx_data);
+    free(cubemap_posy_data);
+    free(cubemap_posz_data);
+}
 
 void onDisplay(){
     //g_render_buffer->Bind();
@@ -388,22 +469,20 @@ void onDisplay(){
     //glEnableVertexAttribArray(plane_vertex_texcoord_location);
     //glDrawArrays(GL_TRIANGLES, 0, 6);
 
-    /*glDepthFunc(GL_ALWAYS);
+    glDepthFunc(GL_ALWAYS);
     glUseProgram(g_cube_program->GetID());
     glBindVertexArray(g_cube_VAO);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glEnableVertexAttribArray(cube_vertex_position_location);
-    glDrawArrays(GL_TRIANGLES, 0, g_cube->NF() * 3);*/
+    glDrawArrays(GL_TRIANGLES, 0, g_cube->NF() * 3);
 
-    //glDepthFunc(GL_LESS);
+    glDepthFunc(GL_LESS);
     glUseProgram(g_sphere_program->GetID());
     glBindVertexArray(g_sphere_VAO);
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glEnableVertexAttribArray(sphere_vertex_position_location);
     glEnableVertexAttribArray(sphere_vertex_normal_location);
-    glDrawArrays(GL_TRIANGLES, 0, 3000 /*g_sphere->NF() * 3*/);
+    glDrawArrays(GL_TRIANGLES, 0, g_sphere->NF() * 3);
     glfwSwapBuffers(g_window);
 }
 
@@ -685,96 +764,17 @@ inline void renderCube() {
 
     setCubeModelViewProjectionMatrix();
     setupCubeBuffers();
-
-    string cubemap_negx_filename = "../cubemap/cubemap_negx.png";
-    string cubemap_negy_filename = "../cubemap/cubemap_negy.png";
-    string cubemap_negz_filename = "../cubemap/cubemap_negz.png";
-    string cubemap_posx_filename = "../cubemap/cubemap_posx.png";
-    string cubemap_posy_filename = "../cubemap/cubemap_posy.png";
-    string cubemap_posz_filename = "../cubemap/cubemap_posz.png";
-
-    vector<unsigned char> cubemap_negx_image;
-    vector<unsigned char> cubemap_negy_image;
-    vector<unsigned char> cubemap_negz_image;
-    vector<unsigned char> cubemap_posx_image;
-    vector<unsigned char> cubemap_posy_image;
-    vector<unsigned char> cubemap_posz_image;
-
-    unsigned width, height;
-    unsigned error = lodepng::decode(cubemap_negx_image, width, height, cubemap_negx_filename.c_str());
-    if(error){
-        cout << "decoder error " << error << ":" << lodepng_error_text(error) << endl;
-    }
-    error = lodepng::decode(cubemap_negy_image, width, height, cubemap_negy_filename.c_str());
-    if(error){
-        cout << "decoder error" << error << ":" << lodepng_error_text(error) << endl;
-    }
-    error = lodepng::decode(cubemap_negz_image, width, height, cubemap_negz_filename.c_str());
-    if(error){
-        cout << "decoder error" << error << ":" << lodepng_error_text(error) << endl;
-    }
-    error = lodepng::decode(cubemap_posx_image, width, height, cubemap_posx_filename.c_str());
-    if(error){
-        cout << "decoder error " << error << ":" << lodepng_error_text(error) << endl;
-    }
-    error = lodepng::decode(cubemap_posy_image, width, height, cubemap_posy_filename.c_str());
-    if(error){
-        cout << "decoder error " << error << ":" << lodepng_error_text(error) << endl;
-    }
-    error = lodepng::decode(cubemap_posz_image, width, height, cubemap_posz_filename.c_str());
-    if(error){
-        cout << "decoder error " << error << ":" << lodepng_error_text(error) << endl;
-    }
-
-    assert(cubemap_negx_image.size() == 2048 * 2048 * 4);
-    assert(cubemap_negy_image.size() == 2048 * 2048 * 4);
-    assert(cubemap_negz_image.size() == 2048 * 2048 * 4);
-    assert(cubemap_posx_image.size() == 2048 * 2048 * 4);
-    assert(cubemap_posy_image.size() == 2048 * 2048 * 4);
-    assert(cubemap_posz_image.size() == 2048 * 2048 * 4);
-
-    GLubyte *cubemap_negx_data = (GLubyte *)malloc(sizeof(GLubyte) * 2048 * 2048 * 4);
-    GLubyte *cubemap_negy_data = (GLubyte *)malloc(sizeof(GLubyte) * 2048 * 2048 * 4);
-    GLubyte *cubemap_negz_data = (GLubyte *)malloc(sizeof(GLubyte) * 2048 * 2048 * 4);
-    GLubyte *cubemap_posx_data = (GLubyte *)malloc(sizeof(GLubyte) * 2048 * 2048 * 4);
-    GLubyte *cubemap_posy_data = (GLubyte *)malloc(sizeof(GLubyte) * 2048 * 2048 * 4);
-    GLubyte *cubemap_posz_data = (GLubyte *)malloc(sizeof(GLubyte) * 2048 * 2048 * 4);
-
-    for(int i = 0; i < cubemap_negx_image.size(); i++){
-        cubemap_negx_data[i] = cubemap_negx_image[i];
-        cubemap_negy_data[i] = cubemap_negy_image[i];
-        cubemap_negz_data[i] = cubemap_negz_image[i];
-        cubemap_posx_data[i] = cubemap_posx_image[i];
-        cubemap_posy_data[i] = cubemap_posy_image[i];
-        cubemap_posz_data[i] = cubemap_posz_image[i];
-    }
-
-    GLTextureCubeMap cubemap;
-    cubemap.Initialize();
-    cubemap.SetImageRGBA(cy::GLTextureCubeMap::POSITIVE_X, cubemap_posx_data, width, height);
-    cubemap.SetImageRGBA(cy::GLTextureCubeMap::POSITIVE_Y, cubemap_posy_data, width, height);
-    cubemap.SetImageRGBA(cy::GLTextureCubeMap::POSITIVE_Z, cubemap_posz_data, width, height);
-    cubemap.SetImageRGBA(cy::GLTextureCubeMap::NEGATIVE_X, cubemap_negx_data, width, height);
-    cubemap.SetImageRGBA(cy::GLTextureCubeMap::NEGATIVE_Y, cubemap_negy_data, width, height);
-    cubemap.SetImageRGBA(cy::GLTextureCubeMap::NEGATIVE_Z, cubemap_negz_data, width, height);
-    cubemap.BuildMipmaps();
-    cubemap.SetFilteringMode(GL_NEAREST, GL_LINEAR);
-
-    cubemap.Bind(0);
-
-    free(cubemap_negx_data);
-    free(cubemap_negy_data);
-    free(cubemap_negz_data);
-    free(cubemap_posx_data);
-    free(cubemap_posy_data);
-    free(cubemap_posz_data);
+    setCubeMap();
 }
+
+
 
 inline void renderSphere(){
     g_sphere = new TriMesh();
-    if(!g_sphere->LoadFromFileObj("../sphere.obj", true)){
+    if(!g_sphere->LoadFromFileObj("../teapot.obj", true)){
         cerr << "failure of loading the obj file" << endl;
     }
+    g_sphere->ComputeNormals(false);
 
     //Generate and bind a vertex array object
     glGenVertexArrays(1, &g_sphere_VAO);
@@ -806,6 +806,7 @@ inline void renderSphere(){
 
     setSphereModelViewProjectionMatrix();
     setupSphereBuffers();
+    setCubeMap();
 }
 
 int main(int argc, char *argv[]){
@@ -855,15 +856,15 @@ int main(int argc, char *argv[]){
         exit(EXIT_FAILURE);
     }
     glfwSetKeyCallback(g_window, key_callback);
-    //glfwSetCursorPosCallback(g_window, cursor_position_callback);
-    //glfwSetMouseButtonCallback(g_window, mouse_button_callback);
+    glfwSetCursorPosCallback(g_window, cursor_position_callback);
+    glfwSetMouseButtonCallback(g_window, mouse_button_callback);
     glfwMakeContextCurrent(g_window);
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
     glfwSwapInterval(1);
 
     //renderTeapot();
     //renderPlane();
-    //renderCube();
+    renderCube();
     renderSphere();
 
     glEnable(GL_DEPTH_TEST);
