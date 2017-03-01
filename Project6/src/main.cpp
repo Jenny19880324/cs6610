@@ -50,12 +50,14 @@ Point2f g_teapot_dist_record_coord;
 Point2f g_teapot_angle_record_coord;
 Point2f g_plane_dist_record_coord;
 Point2f g_plane_angle_record_coord;
+Point2f g_cube_angle_record_coord;
 Point2f g_light_record_coord;
 
 bool g_teapot_dist_record = false;
 bool g_teapot_angle_record = false;
 bool g_plane_dist_record = false;
 bool g_plane_angle_record = false;
+bool g_cube_angle_record = false;
 bool g_light_record = false;
 
 Matrix4<float> g_teapot_view_matrix;
@@ -162,16 +164,9 @@ void setCubeModelViewProjectionMatrix(){
     g_cube_model_matrix = g_cube_mouse_rotation_matrix * g_cube_model_matrix;
     float aspect = (float)g_screen_width / (float)g_screen_height;
     g_cube_projection_matrix.SetIdentity();
-    g_cube_projection_matrix.SetPerspective(PI/3, aspect, 10, -10);
+    g_cube_projection_matrix.SetPerspective(PI/3, aspect, 0, -11);
     g_cube_model_view_matrix = g_cube_view_matrix * g_cube_model_matrix;
     g_cube_model_view_projection_matrix = g_cube_projection_matrix * g_cube_view_matrix * g_cube_model_matrix;
-printf("%f %f %f %f\n", g_cube_model_view_projection_matrix.data[0], g_cube_model_view_projection_matrix.data[4], g_cube_model_view_projection_matrix.data[8], g_cube_model_view_projection_matrix.data[12]);
-printf("%f %f %f %f\n", g_cube_model_view_projection_matrix.data[1], g_cube_model_view_projection_matrix.data[5], g_cube_model_view_projection_matrix.data[9], g_cube_model_view_projection_matrix.data[13]);
-printf("%f %f %f %f\n", g_cube_model_view_projection_matrix.data[2], g_cube_model_view_projection_matrix.data[6], g_cube_model_view_projection_matrix.data[10], g_cube_model_view_projection_matrix.data[14]);
-printf("%f %f %f %f\n", g_cube_model_view_projection_matrix.data[3], g_cube_model_view_projection_matrix.data[7], g_cube_model_view_projection_matrix.data[11], g_cube_model_view_projection_matrix.data[15]);
-
-
-
 
     glUseProgram(g_cube_program->GetID());
     g_cube_program->SetUniformMatrix4(0, g_cube_model_view_projection_matrix.data);
@@ -309,6 +304,8 @@ void onDisplay(){
     //glEnableVertexAttribArray(plane_vertex_position_location);
     //glEnableVertexAttribArray(plane_vertex_texcoord_location);
     //glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    glDepthFunc(GL_ALWAYS);
     glUseProgram(g_cube_program->GetID());
     glBindVertexArray(g_cube_VAO);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -320,7 +317,7 @@ void onDisplay(){
 
 
 void cursor_position_callback(GLFWwindow *window, double xpos, double ypos){
-    if(g_plane_angle_record){
+    /*if(g_plane_angle_record){
         Matrix4<float> rz;
         rz.SetRotation(Point3f(1, 0, 0), ypos - g_plane_angle_record_coord.y);
         Matrix4<float> rx;
@@ -345,13 +342,21 @@ void cursor_position_callback(GLFWwindow *window, double xpos, double ypos){
         g_light_record_coord.y = ypos;
     }
     setPlaneModelViewProjectionMatrix();
-    setTeapotModelViewProjectionMatrix();
+    setTeapotModelViewProjectionMatrix();*/
+    if(g_cube_angle_record){
+        Matrix4<float> rz;
+        rz.SetRotation(Point3f(1, 0, 0), ypos - g_cube_angle_record_coord.y);
+        Matrix4<float> rx;
+        rx.SetRotation(Point3f(0, 1, 0), xpos - g_cube_angle_record_coord.x);
+        g_cube_mouse_rotation_matrix = rx * rz;
+    }
+    setCubeModelViewProjectionMatrix();
 }
 
 void mouse_button_callback(GLFWwindow *window,int button, int action, int mods){
     double xpos, ypos;
     glfwGetCursorPos(g_window, &xpos, &ypos);
-    if(button == GLFW_MOUSE_BUTTON_RIGHT){
+    /*if(button == GLFW_MOUSE_BUTTON_RIGHT){
         if(mods == GLFW_MOD_ALT){
             if(action == GLFW_PRESS){
                 if(!g_plane_angle_record){
@@ -403,7 +408,20 @@ void mouse_button_callback(GLFWwindow *window,int button, int action, int mods){
         }
     }
     setPlaneModelViewProjectionMatrix();
-    setTeapotModelViewProjectionMatrix();
+    setTeapotModelViewProjectionMatrix();*/
+
+    if(button == GLFW_MOUSE_BUTTON_RIGHT){
+        if(action == GLFW_PRESS){
+            if(!g_cube_angle_record){
+                g_cube_angle_record_coord = Point2f(xpos, ypos);
+                g_cube_angle_record = true;
+            }
+        }
+        else{
+            g_cube_angle_record = false;
+        }
+    }
+    setCubeModelViewProjectionMatrix();
 }
 
 static void error_callback(int error, const char* description){
@@ -697,9 +715,9 @@ int main(int argc, char *argv[]){
         glfwTerminate();
         exit(EXIT_FAILURE);
     }
-    //glfwSetKeyCallback(g_window, key_callback);
-    //glfwSetCursorPosCallback(g_window, cursor_position_callback);
-    //glfwSetMouseButtonCallback(g_window, mouse_button_callback);
+    glfwSetKeyCallback(g_window, key_callback);
+    glfwSetCursorPosCallback(g_window, cursor_position_callback);
+    glfwSetMouseButtonCallback(g_window, mouse_button_callback);
     glfwMakeContextCurrent(g_window);
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
     glfwSwapInterval(1);
