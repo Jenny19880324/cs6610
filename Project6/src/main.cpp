@@ -43,7 +43,7 @@ Point3f g_centerV(0, 0, 0);
 Point3f g = Point3f(0.0, 0.0, -1.0); // gaze direction
 Point3f e = Point3f(0.0, 0.0, 0.0); // eye position
 Point3f t = Point3f(0.0, 1.0, 0.0); // view up direction
-Point3f g_light_position = Point3f(0, 1, 0);
+Point3f g_light_position = Point3f(-1, 0, 0);
 
 float g_teapot_dist;
 float g_plane_dist = 6.0;

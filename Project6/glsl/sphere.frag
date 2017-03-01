@@ -15,7 +15,8 @@ uniform vec3 lightPosition;
 
 void main(void){
     vec3 normal = normalize(normalInterp);
-    vec3 lightDir = normalize(lightPosition - vertPos);
+    vec3 lightDir = normalize(lightPosition);
+    lightDir = normalize(vec3(-1, 1, 0));
     vec3 viewDir = normalize(-vertPos);
     vec3 halfDir = normalize(lightDir + viewDir);
 
@@ -24,7 +25,6 @@ void main(void){
     float specular = pow(specAngle, Ns);
     fragColor = vec4(Ka, 1.0) * texture(cubemap, textureDir)
               + vec4(Kd, 1.0) * texture(cubemap, textureDir) * lambertian
-              + vec4(Ks, 1.0) * texture(cubemap, textureDir) * specular;
+              + vec4(Ks, 1.0) * specular;
 
-    fragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }
