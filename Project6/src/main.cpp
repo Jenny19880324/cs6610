@@ -130,14 +130,6 @@ void setPlaneModelViewProjectionMatrix(){
 
     glUseProgram(g_plane_program->GetID());
 
-    g_plane_model_view_projection_matrix.SetIdentity();
-    g_plane_normal_transform_matrix.SetIdentity();
-    g_plane_model_view_matrix.SetIdentity();
-printf("%f %f %f %f\n",g_plane_model_view_projection_matrix.data[0],g_plane_model_view_projection_matrix.data[4],g_plane_model_view_projection_matrix.data[8],g_plane_model_view_projection_matrix.data[12]);
-printf("%f %f %f %f\n",g_plane_model_view_projection_matrix.data[1],g_plane_model_view_projection_matrix.data[5],g_plane_model_view_projection_matrix.data[9],g_plane_model_view_projection_matrix.data[13]);
-printf("%f %f %f %f\n",g_plane_model_view_projection_matrix.data[2],g_plane_model_view_projection_matrix.data[6],g_plane_model_view_projection_matrix.data[10],g_plane_model_view_projection_matrix.data[14]);
-printf("%f %f %f %f\n",g_plane_model_view_projection_matrix.data[3],g_plane_model_view_projection_matrix.data[7],g_plane_model_view_projection_matrix.data[11],g_plane_model_view_projection_matrix.data[15]);
-
     g_plane_program->SetUniformMatrix4(0, g_plane_model_view_projection_matrix.data);
     g_plane_program->SetUniformMatrix4(1, g_plane_normal_transform_matrix.data);
     g_plane_program->SetUniformMatrix4(2, g_plane_model_view_matrix.data);
@@ -230,19 +222,19 @@ void setupPlaneBuffers(){
     Point3f *vertex_data = (Point3f *)malloc(sizeof(Point3f) * 6);
     Point3f *normal_data = (Point3f *)malloc(sizeof(Point3f) * 6);
     Point2f *texcoord_data = (Point2f *)malloc(sizeof(Point2f) * 6);
-    //vertex_data[0] = Point3f(-10.0, 0.0, -10.0);
-    //vertex_data[1] = Point3f(-10.0, 0.0,  10.0);
-    //vertex_data[2] = Point3f( 10.0, 0.0, -10.0);
-    //vertex_data[3] = Point3f(-10.0, 0.0,  10.0);
-    //vertex_data[4] = Point3f( 10.0, 0.0,  10.0);
-    //vertex_data[5] = Point3f( 10.0, 0.0, -10.0);
+    vertex_data[0] = Point3f(-10.0, 0.0, -10.0);
+    vertex_data[1] = Point3f(-10.0, 0.0,  10.0);
+    vertex_data[2] = Point3f( 10.0, 0.0, -10.0);
+    vertex_data[3] = Point3f(-10.0, 0.0,  10.0);
+    vertex_data[4] = Point3f( 10.0, 0.0,  10.0);
+    vertex_data[5] = Point3f( 10.0, 0.0, -10.0);
 
-    vertex_data[0] = Point3f(-0.1, -0.1, 0.0);
-    vertex_data[1] = Point3f( 0.1, -0.1, 0.0);
-    vertex_data[2] = Point3f(-0.1,  0.1, 0.0);
-    vertex_data[3] = Point3f( 0.1, -0.1, 0.0);
-    vertex_data[4] = Point3f( 0.1,  0.1, 0.0);
-    vertex_data[5] = Point3f(-0.1,  0.1, 0.0);
+    //vertex_data[0] = Point3f(-0.1, -0.1, 0.0);
+    //vertex_data[1] = Point3f( 0.1, -0.1, 0.0);
+    //vertex_data[2] = Point3f(-0.1,  0.1, 0.0);
+    //vertex_data[3] = Point3f( 0.1, -0.1, 0.0);
+    //vertex_data[4] = Point3f( 0.1,  0.1, 0.0);
+    //vertex_data[5] = Point3f(-0.1,  0.1, 0.0);
 
     normal_data[0] = Point3f(0, 1, 0);
     normal_data[1] = Point3f(0, 1, 0);
@@ -662,7 +654,7 @@ inline bool renderPlane(){
     setPlaneModelViewProjectionMatrix();
     setupPlaneBuffers();
 
-    //setCubeMap();
+    setCubeMap();
     //g_cubemap.Bind(0);
 
     //textures
