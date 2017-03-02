@@ -112,7 +112,7 @@ GLTextureCubeMap g_cubemap;
 TriMesh::Mtl g_mtl;
 ////////////////////////////////////////////////////////////////////////////////
 void setPlaneModelViewProjectionMatrix(){
-    e = Point3f(0.0, 10.0, 40);
+    e = Point3f(-10.0, 20.0, 60);
     g = Point3f(0.0, 0.0, -1.0);
     Point3f w = -g / g.Length();
     Point3f u = t.Cross(w) / (t.Cross(w)).Length();
@@ -133,39 +133,6 @@ void setPlaneModelViewProjectionMatrix(){
     g_plane_program->SetUniformMatrix4(0, g_plane_model_view_projection_matrix.data);
     g_plane_program->SetUniformMatrix4(1, g_plane_normal_transform_matrix.data);
     g_plane_program->SetUniformMatrix4(2, g_plane_model_view_matrix.data);
-}
-
-
-void setTeapotModelViewProjectionMatrix(){
-    //transformation
-    e = Point3f(0.0, 0.0, g_teapot_dist);
-    g = g_centerV - e;
-    Point3f w = -g / g.Length();
-    Point3f u = t.Cross(w) / (t.Cross(w)).Length();
-    Point3f v = w.Cross(u);
-
-    g_teapot_view_matrix.Set(u, v, w, e);
-    g_teapot_view_matrix.Invert();
-    g_teapot_model_matrix.SetRotationX(-PI/2);
-    g_teapot_model_matrix = g_teapot_mouse_rotation_matrix * g_teapot_model_matrix;
-    float aspect = (float)g_screen_width/(float)g_screen_height;
-    g_teapot_projection_matrix.SetPerspective(PI/3, aspect, 20, -20);
-    g_teapot_model_view_matrix = g_teapot_view_matrix * g_teapot_model_matrix;
-    Matrix4<float> temp = g_teapot_model_view_matrix.GetInverse();
-    g_teapot_normal_transform_matrix = temp.GetTranspose();
-    g_teapot_model_view_projection_matrix = g_teapot_projection_matrix * g_teapot_view_matrix * g_teapot_model_matrix;
-
-    Matrix4<float> rz;
-    rz.SetRotation(Point3f(0, 0, 1), g_light_record_coord.y);
-    Matrix4<float> rx;
-    rx.SetRotation(Point3f(0, 1, 0), g_light_record_coord.x);
-    g_light_rotation_matrix = rx * rz;
-
-    glUseProgram(g_teapot_program->GetID());
-    g_teapot_program->SetUniform(0, g_light_position.x, g_light_position.y, g_light_position.z);
-    g_teapot_program->SetUniformMatrix4(1, g_teapot_model_view_projection_matrix.data);
-    g_teapot_program->SetUniformMatrix4(2, g_teapot_normal_transform_matrix.data);
-    g_teapot_program->SetUniformMatrix4(3, g_teapot_model_view_matrix.data);
 }
 
 void setCubeModelViewProjectionMatrix(){
@@ -191,7 +158,7 @@ void setCubeModelViewProjectionMatrix(){
 }
 
 void setSphereModelViewProjectionMatrix(){
-    e = Point3f(0.0, 10.0, 40.0);
+    e = Point3f(-10.0, 20.0, 60.0);
     g = Point3f(0.0, 0.0, -1.0);
     Point3f w = -g / g.Length();
     Point3f u = t.Cross(w) / (t.Cross(w)).Length();
@@ -218,15 +185,43 @@ void setSphereModelViewProjectionMatrix(){
 
 }
 
+void setMirrorSphereModelViewProjectionMatrix(){
+    e = Point3f(-10.0, -20.0, 60.0);
+    g = Point3f(0.0, 0.0, -1.0);
+    Point3f w = -g / g.Length();
+    Point3f u = t.Cross(w) / (t.Cross(w)).Length();
+    Point3f v = w.Cross(u);
+
+    g_sphere_view_matrix.Set(u, v, w, e);
+    g_sphere_view_matrix.Invert();
+
+    g_sphere_model_matrix.SetIdentity();
+    g_sphere_model_matrix = g_sphere_mouse_rotation_matrix * g_sphere_model_matrix;
+    float aspect = (float)g_screen_width / (float)g_screen_height;
+    g_sphere_projection_matrix.SetIdentity();
+    g_sphere_projection_matrix.SetPerspective(PI/3, aspect, 20, -20);
+    g_sphere_model_view_matrix = g_sphere_view_matrix * g_sphere_model_matrix;
+    g_sphere_model_view_projection_matrix = g_sphere_projection_matrix * g_sphere_view_matrix * g_sphere_model_matrix;
+    Matrix4<float> temp = g_sphere_model_view_matrix.GetInverse();
+    g_sphere_normal_transform_matrix = temp.GetTranspose();
+
+    glUseProgram(g_sphere_program->GetID());
+
+    g_sphere_program->SetUniformMatrix4(1, g_sphere_model_view_projection_matrix.data);
+    g_sphere_program->SetUniformMatrix4(2, g_sphere_normal_transform_matrix.data);
+    g_sphere_program->SetUniformMatrix4(3, g_sphere_model_view_matrix.data);
+}
+
+
 void setupPlaneBuffers(){
     Point3f *vertex_data = (Point3f *)malloc(sizeof(Point3f) * 6);
     Point2f *texcoord_data = (Point2f *)malloc(sizeof(Point2f) * 6);
-    vertex_data[0] = Point3f(-10.0, 0.0, -10.0);
-    vertex_data[1] = Point3f(-10.0, 0.0,  10.0);
-    vertex_data[2] = Point3f( 10.0, 0.0, -10.0);
-    vertex_data[3] = Point3f(-10.0, 0.0,  10.0);
-    vertex_data[4] = Point3f( 10.0, 0.0,  10.0);
-    vertex_data[5] = Point3f( 10.0, 0.0, -10.0);
+    vertex_data[0] = Point3f(-20.0, 0.0, -20.0);
+    vertex_data[1] = Point3f(-20.0, 0.0,  20.0);
+    vertex_data[2] = Point3f( 20.0, 0.0, -20.0);
+    vertex_data[3] = Point3f(-20.0, 0.0,  20.0);
+    vertex_data[4] = Point3f( 20.0, 0.0,  20.0);
+    vertex_data[5] = Point3f( 20.0, 0.0, -20.0);
 
     texcoord_data[0] = Point2f(0.0, 0.0);
     texcoord_data[1] = Point2f(0.0, 1.0);
@@ -399,17 +394,9 @@ inline void setCubeMap(){
 }
 
 void onDisplay(){
+    //render the texture
+    setMirrorSphereModelViewProjectionMatrix();
     g_render_buffer->Bind();
-    //glUseProgram(g_teapot_program->GetID());
-    //glBindVertexArray(g_teapot_VAO);
-    //glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-    //glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    //glEnableVertexAttribArray(teapot_vertex_position_location);
-    //glEnableVertexAttribArray(teapot_vertex_normal_location);
-    //glEnableVertexAttribArray(teapot_vertex_texcoord_location);
-    //glDrawArrays(GL_TRIANGLES, 0, g_mesh->NF() * 3);
-    //g_render_buffer->Unbind();
-
     glDepthFunc(GL_ALWAYS);
     glUseProgram(g_cube_program->GetID());
     glBindVertexArray(g_cube_VAO);
@@ -426,13 +413,28 @@ void onDisplay(){
     glDrawArrays(GL_TRIANGLES, 0, g_sphere->NF() * 3);
     g_render_buffer->Unbind();
 
-    glUseProgram(g_plane_program->GetID());
-    glBindVertexArray(g_plane_VAO);
+    //render the scene
+    setSphereModelViewProjectionMatrix();
+    glDepthFunc(GL_ALWAYS);
+    glUseProgram(g_cube_program->GetID());
+    glBindVertexArray(g_cube_VAO);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glEnableVertexAttribArray(cube_vertex_position_location);
+    glDrawArrays(GL_TRIANGLES, 0, g_cube->NF() * 3);
+
+    glDepthFunc(GL_LESS);
+    glUseProgram(g_plane_program->GetID());
+    glBindVertexArray(g_plane_VAO);
     glEnableVertexAttribArray(plane_vertex_position_location);
     glEnableVertexAttribArray(plane_vertex_texcoord_location);
     glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    glUseProgram(g_sphere_program->GetID());
+    glBindVertexArray(g_sphere_VAO);
+    glEnableVertexAttribArray(sphere_vertex_position_location);
+    glEnableVertexAttribArray(sphere_vertex_normal_location);
+    glDrawArrays(GL_TRIANGLES, 0, g_sphere->NF() * 3);
 
     glfwSwapBuffers(g_window);
 }
