@@ -1,12 +1,29 @@
 #version 330
-uniform sampler2D map_Kd;
+in vec3 normalInterp;
+in vec3 vertPos;
+in vec4 shadowCoord;
 
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
+
+uniform float Ns; //Specular exponent
+uniform vec3 Ka;  //Ambient color;
+uniform vec3 Kd;  //Diffuse color
+uniform vec3 Ks;  //Specular color
+uniform sampler2DShadow map_Shadow; //depth texture map
+
+uniform vec3 lightPosition;
 
 void main(void){
-    vec2 texCoord;
-    texCoord.x = gl_FragCoord.x / 800;
-    texCoord.y = 1.0 - gl_FragCoord.y / 600;
-    fragColor = texture(map_Kd, texCoord);
-}
+    vec3 normal = normalize(normalInterp);
+    vec3 lightDir = normalize(lightPosition - vertPos);
+    vec3 viewDir = normalize(-vertPos);
+    vec3 halfDir = normalize(lightDir + viewDir);
 
+    float lambertian = max(dot(lightDir, normal), 0.0);
+    float specAngle = max(dot(halfDir, normal), 0.0);
+    float specular = pow(specAngle, Ns);
+	
+    fragColor = vec4(Ka, 1.0)
+              + texture(map_Shadow, shadowCoord) * vec4(Kd, 1.0) * lambertian
+              + texture(map_Shadow, shadowCoord) * vec4(Ks, 1.0) * specular;
+}
