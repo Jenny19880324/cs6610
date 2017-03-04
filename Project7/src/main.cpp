@@ -168,9 +168,8 @@ void setPlaneModelViewProjectionMatrix(){
 
     glUseProgram(g_plane_program->GetID());
 
-	//g_plane_model_view_projection_matrix.SetIdentity();
-	//g_plane_program->SetUniform(0, g_light_position.x, g_light_position.y, g_light_position.z);
-   // g_plane_program->SetUniformMatrix4(0, g_plane_model_view_projection_matrix.data);
+	g_plane_program->SetUniform(0, g_light_position.x, g_light_position.y, g_light_position.z);
+    g_plane_program->SetUniformMatrix4(1, g_plane_model_view_projection_matrix.data);
     //g_plane_program->SetUniformMatrix4(2, g_plane_normal_transform_matrix.data);
     //g_plane_program->SetUniformMatrix4(3, g_plane_model_view_matrix.data);
 	//g_plane_program->SetUniformMatrix4(4, g_light_model_view_matrix.data);
@@ -179,19 +178,12 @@ void setPlaneModelViewProjectionMatrix(){
 void setupPlaneBuffers(){
     Point3f *vertex_data = (Point3f *)malloc(sizeof(Point3f) * 6);
 	//Point3f *normal_data = (Point3f *)malloc(sizeof(Point3f) * 6);
-    /*vertex_data[0] = Point3f(-20.0, 0.0, -20.0);
+    vertex_data[0] = Point3f(-20.0, 0.0, -20.0);
     vertex_data[1] = Point3f(-20.0, 0.0,  20.0);
     vertex_data[2] = Point3f( 20.0, 0.0, -20.0);
     vertex_data[3] = Point3f(-20.0, 0.0,  20.0);
     vertex_data[4] = Point3f( 20.0, 0.0,  20.0);
-    vertex_data[5] = Point3f( 20.0, 0.0, -20.0);*/
-
-	vertex_data[0] = Point3f(-1.0, -1.0, 0.0);
-	vertex_data[1] = Point3f( 1.0, -1.0,0.0);
-	vertex_data[2] = Point3f(-1.0, 1.0, 0.0);
-	vertex_data[3] = Point3f( 1.0, -1.0,0.0);
-	vertex_data[4] = Point3f(1.0, 1.0, 0.0);
-	vertex_data[5] = Point3f(-1.0, 1.0, 0.0);
+    vertex_data[5] = Point3f( 20.0, 0.0, -20.0);
 
 	/*normal_data[0] = Point3f(0, 1, 0);
 	normal_data[1] = Point3f(0, 1, 0);
@@ -441,8 +433,8 @@ inline void renderPlane(){
 
     g_plane_program = new GLSLProgram();
     g_plane_program->BuildFiles("../glsl/plane.vert", "../glsl/plane.frag");
-	//g_plane_program->RegisterUniform(0, "lightPosition");
-    //g_plane_program->RegisterUniform(0, "modelViewProjection");
+	g_plane_program->RegisterUniform(0, "lightPosition");
+    g_plane_program->RegisterUniform(1, "modelViewProjection");
 	//g_plane_program->RegisterUniform(2, "normalTransform");
 	//g_plane_program->RegisterUniform(3, "modelView");
 	//g_plane_program->RegisterUniform(4, "lightModelViewProjection");
@@ -458,7 +450,7 @@ inline void renderPlane(){
 	//g_plane_program->SetUniform(6, 0.5, 0.5, 0.6);
 	//g_plane_program->SetUniform(7, 0.5, 0.5, 0.5);
 	//g_plane_program->SetUniform(8, 1.0, 1.0, 1.0);
-    //setPlaneModelViewProjectionMatrix();
+    setPlaneModelViewProjectionMatrix();
     setupPlaneBuffers();
 
 	//depth texture

@@ -11,7 +11,7 @@ layout(location = 0) out vec4 fragColor;
 //uniform vec3 Ks;  //Specular color
 //uniform sampler2DShadow map_Shadow; //depth texture map
 
-//uniform vec3 lightPosition;
+uniform vec3 lightPosition;
 
 void main(void){
     //vec3 normal = normalize(normalInterp);
