@@ -169,20 +169,29 @@ void setPlaneModelViewProjectionMatrix(){
     glUseProgram(g_plane_program->GetID());
 
 	g_plane_model_view_projection_matrix.SetIdentity();
-    g_plane_program->SetUniformMatrix4(0, g_plane_model_view_projection_matrix.data);
-    g_plane_program->SetUniformMatrix4(1, g_plane_normal_transform_matrix.data);
-    g_plane_program->SetUniformMatrix4(2, g_plane_model_view_matrix.data);
+	g_plane_program->SetUniform(0, g_light_position.x, g_light_position.y, g_light_position.z);
+    g_plane_program->SetUniformMatrix4(1, g_plane_model_view_projection_matrix.data);
+    g_plane_program->SetUniformMatrix4(2, g_plane_normal_transform_matrix.data);
+    g_plane_program->SetUniformMatrix4(3, g_plane_model_view_matrix.data);
+	g_plane_program->SetUniformMatrix4(4, g_light_model_view_matrix.data);
 }
 
 void setupPlaneBuffers(){
     Point3f *vertex_data = (Point3f *)malloc(sizeof(Point3f) * 6);
 	Point3f *normal_data = (Point3f *)malloc(sizeof(Point3f) * 6);
-    vertex_data[0] = Point3f(-20.0, 0.0, -20.0);
+    /*vertex_data[0] = Point3f(-20.0, 0.0, -20.0);
     vertex_data[1] = Point3f(-20.0, 0.0,  20.0);
     vertex_data[2] = Point3f( 20.0, 0.0, -20.0);
     vertex_data[3] = Point3f(-20.0, 0.0,  20.0);
     vertex_data[4] = Point3f( 20.0, 0.0,  20.0);
-    vertex_data[5] = Point3f( 20.0, 0.0, -20.0);
+    vertex_data[5] = Point3f( 20.0, 0.0, -20.0);*/
+
+	vertex_data[0] = Point3f(-1.0, -1.0, 0.0);
+	vertex_data[1] = Point3f( 1.0, -1.0,0.0);
+	vertex_data[2] = Point3f(-1.0, 1.0, 0.0);
+	vertex_data[3] = Point3f( 1.0, -1.0,0.0);
+	vertex_data[4] = Point3f(1.0, 1.0, 0.0);
+	vertex_data[5] = Point3f(-1.0, 1.0, 0.0);
 
 	normal_data[0] = Point3f(0, 1, 0);
 	normal_data[1] = Point3f(0, 1, 0);
@@ -268,7 +277,7 @@ void setupDepthBuffers() {
 
 void onDisplay(){
     //render the texture
-    g_render_depth->Bind();
+    //g_render_depth->Bind();
 	setLightModelViewProjectionMatrix();
     glUseProgram(g_depth_program->GetID());
     glBindVertexArray(g_depth_VAO);
@@ -276,20 +285,20 @@ void onDisplay(){
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glEnableVertexAttribArray(teapot_vertex_position_location);
     glDrawArrays(GL_TRIANGLES, 0, g_mesh->NF() * 3);
-    g_render_depth->Unbind();
+   // g_render_depth->Unbind();
 
     //render the scene
-    glUseProgram(g_plane_program->GetID());
+    /*glUseProgram(g_plane_program->GetID());
     glBindVertexArray(g_plane_VAO);
     glEnableVertexAttribArray(plane_vertex_position_location);
     glEnableVertexAttribArray(plane_vertex_normal_location);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
-    glUseProgram(g_teapot_program->GetID());
+    /*glUseProgram(g_teapot_program->GetID());
     glBindVertexArray(g_teapot_VAO);
     glEnableVertexAttribArray(teapot_vertex_position_location);
     glEnableVertexAttribArray(teapot_vertex_normal_location);
-    glDrawArrays(GL_TRIANGLES, 0, g_mesh->NF() * 3);
+    glDrawArrays(GL_TRIANGLES, 0, g_mesh->NF() * 3);*/
 
     glfwSwapBuffers(g_window);
 }
@@ -545,9 +554,9 @@ int main(int argc, char *argv[]){
     glfwSwapInterval(1);
 
 	g_render_depth = new GLRenderDepth2D();
-	bindDepthTexture();
+	//bindDepthTexture();
 	renderDepth();
-	renderPlane();
+	//renderPlane();
 	//renderTeapot();
 
     glEnable(GL_DEPTH_TEST);

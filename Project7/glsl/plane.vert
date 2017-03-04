@@ -1,7 +1,6 @@
 #version 330
 layout(location = 0) in vec3 pos;
 layout(location = 1) in vec3 inputNormal;
-layout(location = 2) in vec2 inputTexCoord;
 
 out vec3 normalInterp;
 out vec3 vertPos;
