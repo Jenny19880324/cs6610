@@ -115,8 +115,8 @@ void setLightModelViewProjectionMatrix() {
 
 void setTeapotModelViewProjectionMatrix() {
 	//transformation
-	e = Point3f(-10.0, 20.0, 60.0);
-	g = Point3f(0.0, 0.0, -1.0);
+	e = Point3f(-10.0, 20.0, -60.0);
+	g = g_centerV - e;
 	Point3f w = -g / g.Length();
 	Point3f u = t.Cross(w) / (t.Cross(w)).Length();
 	Point3f v = w.Cross(u);
@@ -147,8 +147,8 @@ void setTeapotModelViewProjectionMatrix() {
 }
 
 void setPlaneModelViewProjectionMatrix(){
-    e = Point3f(-10.0, 20.0, 60);
-    g = Point3f(0.0, 0.0, -1.0);
+    e = Point3f(-10.0, 20.0, -60);
+    g = g_centerV - e;
     Point3f w = -g / g.Length();
     Point3f u = t.Cross(w) / (t.Cross(w)).Length();
     Point3f v = w.Cross(u);

@@ -7,6 +7,7 @@ in vec4 shadowCoord;
 layout(location = 0) out vec4 fragColor;
 
 uniform sampler2DShadow map_Shadow; //depth texture map
+//uniform sampler2D map_Shadow;
 
 void main(void){
 	const float Ns = 18.0;
@@ -23,7 +24,8 @@ void main(void){
     float specAngle = max(dot(halfDir, normal), 0.0);
     float specular = pow(specAngle, Ns);
 	
-    fragColor = /*texture(map_Shadow, shadowCoord.xyz) */ vec4(Ka, 1.0)
-              + texture(map_Shadow, shadowCoord.xyz) * vec4(Kd, 1.0) * lambertian
-              + texture(map_Shadow, shadowCoord.xyz) * vec4(Ks, 1.0) * specular;
+    fragColor = texture(map_Shadow, vec3(shadowCoord.xy, 1.0)) * vec4(Ka, 1.0)
+              + texture(map_Shadow, vec3(shadowCoord.xy, 1.0)) * vec4(Kd, 1.0) * lambertian
+              + texture(map_Shadow, vec3(shadowCoord.xy, 1.0)) * vec4(Ks, 1.0) * specular;
+    //fragColor = texture(map_Shadow, shadowCoord.xy);
 }
