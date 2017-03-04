@@ -1356,8 +1356,8 @@ inline bool GLRenderDepth<TEXTURE_TYPE>::Initialize( bool depthComparisonTexture
 	glBindFramebuffer(GL_FRAMEBUFFER, framebufferID);
 	if ( depthComparisonTexture ) {
 		glTexParameteri(TEXTURE_TYPE, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-		//glTexParameteri(TEXTURE_TYPE, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-		glTexParameteri(TEXTURE_TYPE, GL_TEXTURE_COMPARE_FUNC, GL_GEQUAL);
+		glTexParameteri(TEXTURE_TYPE, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+		//glTexParameteri(TEXTURE_TYPE, GL_TEXTURE_COMPARE_FUNC, GL_GEQUAL);
 	}
 	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texture.GetID(), 0);
 	glDrawBuffer(GL_NONE);
