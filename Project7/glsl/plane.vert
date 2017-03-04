@@ -21,7 +21,7 @@ void main(){
 	mat4 Ms = mat4(vec4(0.495, 0, 0, 0),
 					vec4(0, 0.495, 0, 0),
 					vec4(0, 0, 0.495, 0),
-					vec4(0.5, 0.5, 0.495, 1));
+					vec4(0.495, 0.495, 0.495, 1));
 	shadowCoord = Ms * lightModelViewProjection * vec4(pos, 1.0);
 	
 	const vec3 lightPosition = vec3(20, 30, 20);

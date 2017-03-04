@@ -104,7 +104,7 @@ void setLightModelViewProjectionMatrix() {
 	g_light_model_matrix = g_light_mouse_rotation_matrix * g_light_model_matrix;
 	float aspect = (float)g_screen_width / (float)g_screen_height;
 	g_light_projection_matrix.SetIdentity();
-	g_light_projection_matrix.SetPerspective(PI / 3, aspect, 20, -20);
+	g_light_projection_matrix.SetPerspective(PI / 3, aspect, 100, 0);
 	g_light_model_view_matrix = g_light_view_matrix * g_light_model_matrix;
 	g_light_model_view_projection_matrix = g_light_projection_matrix * g_light_view_matrix * g_light_model_matrix;
 
@@ -169,18 +169,18 @@ void setPlaneModelViewProjectionMatrix(){
     g_plane_program->SetUniformMatrix4(0, g_plane_model_view_projection_matrix.data);
     g_plane_program->SetUniformMatrix4(1, g_plane_normal_transform_matrix.data);
     g_plane_program->SetUniformMatrix4(2, g_plane_model_view_matrix.data);
-	g_plane_program->SetUniformMatrix4(3, g_light_model_view_matrix.data);
+	g_plane_program->SetUniformMatrix4(3, g_light_model_view_projection_matrix.data);
 }
 
 void setupPlaneBuffers(){
     Point3f *vertex_data = (Point3f *)malloc(sizeof(Point3f) * 6);
 	Point3f *normal_data = (Point3f *)malloc(sizeof(Point3f) * 6);
-    vertex_data[0] = Point3f(-20.0, 0.0, -20.0);
-    vertex_data[1] = Point3f(-20.0, 0.0,  20.0);
-    vertex_data[2] = Point3f( 20.0, 0.0, -20.0);
-    vertex_data[3] = Point3f(-20.0, 0.0,  20.0);
-    vertex_data[4] = Point3f( 20.0, 0.0,  20.0);
-    vertex_data[5] = Point3f( 20.0, 0.0, -20.0);
+    vertex_data[0] = Point3f(-30.0, 0.0, -30.0);
+    vertex_data[1] = Point3f(-30.0, 0.0,  30.0);
+    vertex_data[2] = Point3f( 30.0, 0.0, -30.0);
+    vertex_data[3] = Point3f(-30.0, 0.0,  30.0);
+    vertex_data[4] = Point3f( 30.0, 0.0,  30.0);
+    vertex_data[5] = Point3f( 30.0, 0.0, -30.0);
 
 	normal_data[0] = Point3f(0, 1, 0);
 	normal_data[1] = Point3f(0, 1, 0);
