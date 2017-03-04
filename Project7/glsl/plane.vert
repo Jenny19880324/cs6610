@@ -22,5 +22,5 @@ void main(){
 	const vec3 lightPosition = vec3(20, 30, 20);
 	vec4 lightDir4 = vec4(lightPosition - pos, 0.0);
 	lightDir4 = modelView * lightDir4;
-	lightDir = lightDir4.xyz;
+	lightDir = normalize(lightDir4.xyz);
 }
