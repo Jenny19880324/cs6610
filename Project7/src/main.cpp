@@ -41,7 +41,7 @@ Point3f g_centerV(0, 0, 0);
 Point3f g = Point3f(0.0, 0.0, -1.0); // gaze direction
 Point3f e = Point3f(0.0, 0.0, 0.0); // eye position
 Point3f t = Point3f(0.0, 1.0, 0.0); // view up direction
-Point3f g_light_position = Point3f(20, 30, 20);
+Point3f g_light_position(20, 30, 20);
 
 float g_teapot_dist;
 float g_plane_dist = 6.0;
@@ -115,15 +115,15 @@ void setLightModelViewProjectionMatrix() {
 
 void setTeapotModelViewProjectionMatrix() {
 	//transformation
-	e = Point3f(0.0, 0.0, g_teapot_dist);
-	g = g_centerV - e;
+	e = Point3f(-10.0, 20.0, 60.0);
+	g = Point3f(0.0, 0.0, -1.0);
 	Point3f w = -g / g.Length();
 	Point3f u = t.Cross(w) / (t.Cross(w)).Length();
 	Point3f v = w.Cross(u);
 
 	g_teapot_view_matrix.Set(u, v, w, e);
 	g_teapot_view_matrix.Invert();
-	g_teapot_model_matrix.SetRotationX(-PI / 2);
+	g_teapot_model_matrix.SetIdentity();
 	g_teapot_model_matrix = g_teapot_mouse_rotation_matrix * g_teapot_model_matrix;
 	float aspect = (float)g_screen_width / (float)g_screen_height;
 	g_teapot_projection_matrix.SetPerspective(PI / 3, aspect, 20, -20);
@@ -139,11 +139,10 @@ void setTeapotModelViewProjectionMatrix() {
 	g_light_rotation_matrix = rx * rz;
 
 	glUseProgram(g_teapot_program->GetID());
-	g_teapot_program->SetUniform(0, g_light_position.x, g_light_position.y, g_light_position.z);
-	g_teapot_program->SetUniformMatrix4(1, g_teapot_model_view_projection_matrix.data);
-	g_teapot_program->SetUniformMatrix4(2, g_teapot_normal_transform_matrix.data);
-	g_teapot_program->SetUniformMatrix4(3, g_teapot_model_view_matrix.data);
-	g_teapot_program->SetUniformMatrix4(4, g_light_model_view_projection_matrix.data);
+	g_teapot_program->SetUniformMatrix4(0, g_teapot_model_view_projection_matrix.data);
+	g_teapot_program->SetUniformMatrix4(1, g_teapot_normal_transform_matrix.data);
+	g_teapot_program->SetUniformMatrix4(2, g_teapot_model_view_matrix.data);
+	g_teapot_program->SetUniformMatrix4(3, g_light_model_view_projection_matrix.data);
 
 }
 
@@ -167,17 +166,15 @@ void setPlaneModelViewProjectionMatrix(){
     g_plane_model_view_projection_matrix = g_plane_projection_matrix * g_plane_view_matrix * g_plane_model_matrix;
 
     glUseProgram(g_plane_program->GetID());
-
-	g_plane_program->SetUniform(0, g_light_position.x, g_light_position.y, g_light_position.z);
-    g_plane_program->SetUniformMatrix4(1, g_plane_model_view_projection_matrix.data);
-    //g_plane_program->SetUniformMatrix4(2, g_plane_normal_transform_matrix.data);
-    //g_plane_program->SetUniformMatrix4(3, g_plane_model_view_matrix.data);
-	//g_plane_program->SetUniformMatrix4(4, g_light_model_view_matrix.data);
+    g_plane_program->SetUniformMatrix4(0, g_plane_model_view_projection_matrix.data);
+    g_plane_program->SetUniformMatrix4(1, g_plane_normal_transform_matrix.data);
+    g_plane_program->SetUniformMatrix4(2, g_plane_model_view_matrix.data);
+	g_plane_program->SetUniformMatrix4(3, g_light_model_view_matrix.data);
 }
 
 void setupPlaneBuffers(){
     Point3f *vertex_data = (Point3f *)malloc(sizeof(Point3f) * 6);
-	//Point3f *normal_data = (Point3f *)malloc(sizeof(Point3f) * 6);
+	Point3f *normal_data = (Point3f *)malloc(sizeof(Point3f) * 6);
     vertex_data[0] = Point3f(-20.0, 0.0, -20.0);
     vertex_data[1] = Point3f(-20.0, 0.0,  20.0);
     vertex_data[2] = Point3f( 20.0, 0.0, -20.0);
@@ -185,12 +182,12 @@ void setupPlaneBuffers(){
     vertex_data[4] = Point3f( 20.0, 0.0,  20.0);
     vertex_data[5] = Point3f( 20.0, 0.0, -20.0);
 
-	/*normal_data[0] = Point3f(0, 1, 0);
+	normal_data[0] = Point3f(0, 1, 0);
 	normal_data[1] = Point3f(0, 1, 0);
 	normal_data[2] = Point3f(0, 1, 0);
 	normal_data[3] = Point3f(0, 1, 0);
 	normal_data[4] = Point3f(0, 1, 0);
-	normal_data[5] = Point3f(0, 1, 0);*/
+	normal_data[5] = Point3f(0, 1, 0);
 
     //Generate a vertex buffer
     GLuint vertex_position_buffer;
@@ -202,16 +199,16 @@ void setupPlaneBuffers(){
     glVertexAttribPointer(plane_vertex_position_location, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
 	//Generate a normal buffer
-	/*GLuint vertex_normal_buffer;
+	GLuint vertex_normal_buffer;
 	glGenBuffers(1, &vertex_normal_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(Point3f) * 6, vertex_data, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(plane_vertex_normal_location);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer);
-	glVertexAttribPointer(plane_vertex_normal_location, 3, GL_FLOAT, GL_FALSE, 0, 0);*/
+	glVertexAttribPointer(plane_vertex_normal_location, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
     free(vertex_data);
-	//free(normal_data);
+	free(normal_data);
 }
 
 void setupTeapotBuffers() {
@@ -285,14 +282,14 @@ void onDisplay(){
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glEnableVertexAttribArray(plane_vertex_position_location);
-    //glEnableVertexAttribArray(plane_vertex_normal_location);
+    glEnableVertexAttribArray(plane_vertex_normal_location);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
-    /*glUseProgram(g_teapot_program->GetID());
+    glUseProgram(g_teapot_program->GetID());
     glBindVertexArray(g_teapot_VAO);
     glEnableVertexAttribArray(teapot_vertex_position_location);
     glEnableVertexAttribArray(teapot_vertex_normal_location);
-    glDrawArrays(GL_TRIANGLES, 0, g_mesh->NF() * 3);*/
+    glDrawArrays(GL_TRIANGLES, 0, g_mesh->NF() * 3);
 
     glfwSwapBuffers(g_window);
 }
@@ -433,23 +430,14 @@ inline void renderPlane(){
 
     g_plane_program = new GLSLProgram();
     g_plane_program->BuildFiles("../glsl/plane.vert", "../glsl/plane.frag");
-	g_plane_program->RegisterUniform(0, "lightPosition");
-    g_plane_program->RegisterUniform(1, "modelViewProjection");
-	//g_plane_program->RegisterUniform(2, "normalTransform");
-	//g_plane_program->RegisterUniform(3, "modelView");
-	//g_plane_program->RegisterUniform(4, "lightModelViewProjection");
-	//g_plane_program->RegisterUniform(5, "Ns");
-	//g_plane_program->RegisterUniform(6, "Ka");
-	//g_plane_program->RegisterUniform(7, "Kd");
-	//g_plane_program->RegisterUniform(8, "Ks");
-    //g_plane_program->Bind();
+    g_plane_program->RegisterUniform(0, "modelViewProjection");
+	g_plane_program->RegisterUniform(1, "normalTransform");
+	g_plane_program->RegisterUniform(2, "modelView");
+	g_plane_program->RegisterUniform(3, "lightModelViewProjection");
+    g_plane_program->Bind();
     plane_vertex_position_location = glGetAttribLocation(g_plane_program->GetID(), "pos");
-    //plane_vertex_normal_location = glGetAttribLocation(g_plane_program->GetID(), "inputNormal");
+    plane_vertex_normal_location = glGetAttribLocation(g_plane_program->GetID(), "inputNormal");
 
-	//g_plane_program->SetUniform(5, 18);
-	//g_plane_program->SetUniform(6, 0.5, 0.5, 0.6);
-	//g_plane_program->SetUniform(7, 0.5, 0.5, 0.5);
-	//g_plane_program->SetUniform(8, 1.0, 1.0, 1.0);
     setPlaneModelViewProjectionMatrix();
     setupPlaneBuffers();
 
@@ -465,33 +453,20 @@ inline void renderTeapot() {
 
 	g_teapot_program = new GLSLProgram();
 	g_teapot_program->BuildFiles("../glsl/teapot.vert", "../glsl/teapot.frag");
-	g_teapot_program->RegisterUniform(0, "lightPosition");
-	g_teapot_program->RegisterUniform(1, "modelViewProjection");
-	g_teapot_program->RegisterUniform(2, "normalTransform");
-	g_teapot_program->RegisterUniform(3, "modelView");
-	g_teapot_program->RegisterUniform(4, "lightModelViewProjection");
-	g_teapot_program->RegisterUniform(5, "Ns");
-	g_teapot_program->RegisterUniform(6, "Ka");
-	g_teapot_program->RegisterUniform(7, "Kd");
-	g_teapot_program->RegisterUniform(8, "Ks");
+	g_teapot_program->RegisterUniform(0, "modelViewProjection");
+	g_teapot_program->RegisterUniform(1, "normalTransform");
+	g_teapot_program->RegisterUniform(2, "modelView");
+	g_teapot_program->RegisterUniform(3, "lightModelViewProjection");
 
 	g_teapot_program->Bind();
 	teapot_vertex_position_location = glGetAttribLocation(g_teapot_program->GetID(), "pos");
 	teapot_vertex_normal_location = glGetAttribLocation(g_teapot_program->GetID(), "inputNormal");
 
-	Point3f p_Ka; p_Ka.Set(g_mesh->M(0).Ka);
-	Point3f p_Kd; p_Kd.Set(g_mesh->M(0).Kd);
-	Point3f p_Ks; p_Ks.Set(g_mesh->M(0).Ks);
-
-	g_teapot_program->SetUniform(5, g_mesh->M(0).Ns);
-	g_teapot_program->SetUniform(6, p_Ka.x, p_Ka.y, p_Ka.z);
-	g_teapot_program->SetUniform(7, p_Kd.x, p_Kd.y, p_Kd.z);
-	g_teapot_program->SetUniform(8, p_Ks.x, p_Ks.y, p_Ks.z);
 	setTeapotModelViewProjectionMatrix();
 	setupTeapotBuffers();
 
-	GLint texLoc = glGetUniformLocation(g_teapot_program->GetID(), "map_Shadow");
-	glUniform1i(texLoc, g_render_depth->GetTextureID());
+	//GLint texLoc = glGetUniformLocation(g_teapot_program->GetID(), "map_Shadow");
+	//glUniform1i(texLoc, g_render_depth->GetTextureID());
 }
 
 int main(int argc, char *argv[]){
@@ -551,7 +526,7 @@ int main(int argc, char *argv[]){
 	//bindDepthTexture();
 	//renderDepth();
 	renderPlane();
-	//renderTeapot();
+	renderTeapot();
 
     glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(g_window)){
