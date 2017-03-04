@@ -102,14 +102,11 @@ Matrix4<float> g_light_mouse_rotation_matrix;
 
 GLint teapot_vertex_position_location;
 GLint teapot_vertex_normal_location;
-GLint teapot_vertex_texcoord_location;
-GLint plane_vertex_texcoord_location;
 GLint plane_vertex_normal_location;
 GLint plane_vertex_position_location;
 GLint cube_vertex_position_location;
 GLint sphere_vertex_position_location;
 GLint sphere_vertex_normal_location;
-GLint sphere_vertex_texcoord_location;
 GLuint g_teapot_VAO;
 GLuint g_plane_VAO;
 GLuint g_cube_VAO;
@@ -252,7 +249,7 @@ void setSphereModelViewProjectionMatrix(){
 
 void setupPlaneBuffers(){
     Point3f *vertex_data = (Point3f *)malloc(sizeof(Point3f) * 6);
-    Point2f *texcoord_data = (Point2f *)malloc(sizeof(Point2f) * 6);
+	Point3f *normal_data = (Point3f *)malloc(sizeof(Point3f) * 6);
     vertex_data[0] = Point3f(-20.0, 0.0, -20.0);
     vertex_data[1] = Point3f(-20.0, 0.0,  20.0);
     vertex_data[2] = Point3f( 20.0, 0.0, -20.0);
@@ -260,12 +257,12 @@ void setupPlaneBuffers(){
     vertex_data[4] = Point3f( 20.0, 0.0,  20.0);
     vertex_data[5] = Point3f( 20.0, 0.0, -20.0);
 
-    texcoord_data[0] = Point2f(0.0, 0.0);
-    texcoord_data[1] = Point2f(0.0, 1.0);
-    texcoord_data[2] = Point2f(1.0, 0.0);
-    texcoord_data[3] = Point2f(0.0, 1.0);
-    texcoord_data[4] = Point2f(1.0, 1.0);
-    texcoord_data[5] = Point2f(1.0, 0.0);
+	normal_data[0] = Point3f(0, 1, 0);
+	normal_data[1] = Point3f(0, 1, 0);
+	normal_data[2] = Point3f(0, 1, 0);
+	normal_data[3] = Point3f(0, 1, 0);
+	normal_data[4] = Point3f(0, 1, 0);
+	normal_data[5] = Point3f(0, 1, 0);
 
     //Generate a vertex buffer
     GLuint vertex_position_buffer;
@@ -276,23 +273,22 @@ void setupPlaneBuffers(){
     glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer);
     glVertexAttribPointer(plane_vertex_position_location, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-    //Generate a texture coordinate buffer
-    GLuint vertex_texcoord_buffer;
-    glGenBuffers(1, &vertex_texcoord_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_texcoord_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Point2f) * 6, texcoord_data, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(plane_vertex_texcoord_location);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_texcoord_buffer);
-    glVertexAttribPointer(plane_vertex_texcoord_location, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	//Generate a normal buffer
+	GLuint vertex_normal_buffer;
+	glGenBuffers(1, &vertex_normal_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Point3f) * 6, vertex_data, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(plane_vertex_normal_location);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer);
+	glVertexAttribPointer(plane_vertex_normal_location, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
     free(vertex_data);
-    free(texcoord_data);
+	free(normal_data);
 }
 
 void setupTeapotBuffers() {
 	Point3f *vertex_data = (Point3f *)malloc(sizeof(Point3f) * g_mesh->NF() * 3);
 	Point3f *normal_data = (Point3f *)malloc(sizeof(Point3f) * g_mesh->NF() * 3);
-	Point3f *texcoord_data = (Point3f *)malloc(sizeof(Point3f) * g_mesh->NF() * 3);
 	for (int i = 0; i < g_mesh->NF(); i++) {
 		vertex_data[i * 3 + 0] = g_mesh->V(g_mesh->F(i).v[0]);
 		vertex_data[i * 3 + 1] = g_mesh->V(g_mesh->F(i).v[1]);
@@ -301,10 +297,6 @@ void setupTeapotBuffers() {
 		normal_data[i * 3 + 0] = g_mesh->VN(g_mesh->FN(i).v[0]);
 		normal_data[i * 3 + 1] = g_mesh->VN(g_mesh->FN(i).v[1]);
 		normal_data[i * 3 + 2] = g_mesh->VN(g_mesh->FN(i).v[2]);
-
-		texcoord_data[i * 3 + 0] = g_mesh->VT(g_mesh->FT(i).v[0]);
-		texcoord_data[i * 3 + 1] = g_mesh->VT(g_mesh->FT(i).v[1]);
-		texcoord_data[i * 3 + 2] = g_mesh->VT(g_mesh->FT(i).v[2]);
 	}
 
 	//Generate a vertex buffer
@@ -326,15 +318,6 @@ void setupTeapotBuffers() {
 	glEnableVertexAttribArray(teapot_vertex_normal_location);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer);
 	glVertexAttribPointer(teapot_vertex_normal_location, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-	//Generate a texture coordinate buffer
-	GLuint vertex_texcoord_buffer;
-	glGenBuffers(1, &vertex_texcoord_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_texcoord_buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Point3f) * g_mesh->NF() * 3, texcoord_data, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(teapot_vertex_texcoord_location);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_texcoord_buffer);
-	glVertexAttribPointer(teapot_vertex_texcoord_location, 3, GL_FLOAT, GL_FALSE, 0, 0);
 }
 
 void setupDepthBuffers() {
@@ -358,7 +341,7 @@ void setupDepthBuffers() {
 
 void onDisplay(){
     //render the texture
-    g_render_depth->Bind();
+    /*g_render_depth->Bind();
 	setLightModelViewProjectionMatrix();
     glUseProgram(g_depth_program->GetID());
     glBindVertexArray(g_depth_VAO);
@@ -372,15 +355,14 @@ void onDisplay(){
     glUseProgram(g_plane_program->GetID());
     glBindVertexArray(g_plane_VAO);
     glEnableVertexAttribArray(plane_vertex_position_location);
-    glEnableVertexAttribArray(plane_vertex_texcoord_location);
+    glEnableVertexAttribArray(plane_vertex_normal_location);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     glUseProgram(g_teapot_program->GetID());
     glBindVertexArray(g_teapot_VAO);
     glEnableVertexAttribArray(teapot_vertex_position_location);
     glEnableVertexAttribArray(teapot_vertex_normal_location);
-	glEnableVertexAttribArray(teapot_vertex_texcoord_location);
-    glDrawArrays(GL_TRIANGLES, 0, g_mesh->NF() * 3);
+    glDrawArrays(GL_TRIANGLES, 0, g_mesh->NF() * 3);*/
 
     glfwSwapBuffers(g_window);
 }
@@ -511,15 +493,13 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 inline bool bindDepthTexture() {
 	//depth textures
 	g_render_depth->Initialize(true);
-	g_render_depth->Resize(4, g_screen_width, g_screen_height);
+	g_render_depth->Resize(g_screen_width, g_screen_height);
 	if (!g_render_depth->IsComplete()) {
 		printf("buffer not complete\n"); return false;
 	}
 	g_render_depth->BindTexture(0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	GLint texLoc = glGetUniformLocation(g_plane_program->GetID(), "map_Shadow");
-	glUniform1i(texLoc, g_render_depth->GetTextureID());
 	g_render_depth->BuildTextureMipmaps();
 	g_render_depth->SetTextureMaxAnisotropy();
 	g_render_depth->SetTextureFilteringMode(GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST);
@@ -541,7 +521,7 @@ inline void renderDepth() {
 	setupDepthBuffers();
 }
 
-inline bool renderPlane(){
+inline void renderPlane(){
     glGenVertexArrays(1, &g_plane_VAO);
     glBindVertexArray(g_plane_VAO);
 
@@ -558,7 +538,7 @@ inline bool renderPlane(){
 	g_plane_program->RegisterUniform(8, "Ks");
     g_plane_program->Bind();
     plane_vertex_position_location = glGetAttribLocation(g_plane_program->GetID(), "pos");
-    plane_vertex_texcoord_location = glGetAttribLocation(g_plane_program->GetID(), "inputTexCoord");
+    plane_vertex_normal_location = glGetAttribLocation(g_plane_program->GetID(), "inputNormal");
 
 	g_plane_program->SetUniform(5, 18);
 	g_plane_program->SetUniform(6, 0.5, 0.5, 0.6);
@@ -566,7 +546,10 @@ inline bool renderPlane(){
 	g_plane_program->SetUniform(8, 1.0, 1.0, 1.0);
     setPlaneModelViewProjectionMatrix();
     setupPlaneBuffers();
-	return bindDepthTexture();
+
+	//depth texture
+	GLint texLoc = glGetUniformLocation(g_plane_program->GetID(), "map_Shadow");
+	glUniform1i(texLoc, g_render_depth->GetTextureID());
 }
 
 inline bool renderTeapot() {
@@ -589,7 +572,6 @@ inline bool renderTeapot() {
 	g_teapot_program->Bind();
 	teapot_vertex_position_location = glGetAttribLocation(g_teapot_program->GetID(), "pos");
 	teapot_vertex_normal_location = glGetAttribLocation(g_teapot_program->GetID(), "inputNormal");
-	teapot_vertex_texcoord_location = glGetAttribLocation(g_teapot_program->GetID(), "inputTexCoord");
 
 	Point3f p_Ka; p_Ka.Set(g_mesh->M(0).Ka);
 	Point3f p_Kd; p_Kd.Set(g_mesh->M(0).Kd);
@@ -602,7 +584,8 @@ inline bool renderTeapot() {
 	setTeapotModelViewProjectionMatrix();
 	setupTeapotBuffers();
 
-	return bindDepthTexture();
+	GLint texLoc = glGetUniformLocation(g_teapot_program->GetID(), "map_Shadow");
+	glUniform1i(texLoc, g_render_depth->GetTextureID());
 }
 
 int main(int argc, char *argv[]){
@@ -620,6 +603,7 @@ int main(int argc, char *argv[]){
     if(!g_mesh->LoadFromFileObj(obj_filename.c_str(), true)){
         cerr << "failure of loading the obj file" << endl;
     }
+	g_mesh->ComputeNormals(false);
 
     //center the object
     for(unsigned i = 0; i < g_mesh->NV(); i++){
@@ -659,9 +643,11 @@ int main(int argc, char *argv[]){
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
     glfwSwapInterval(1);
 
-	renderDepth();
-	renderPlane();
-	renderTeapot();
+	g_render_depth = new GLRenderDepth2D();
+	bindDepthTexture();
+	//renderDepth();
+	//renderPlane();
+	//renderTeapot();
 
     glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(g_window)){
