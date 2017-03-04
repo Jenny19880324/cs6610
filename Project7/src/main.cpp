@@ -266,15 +266,15 @@ void setupDepthBuffers() {
 
 void onDisplay(){
     //render the texture
-    //g_render_depth->Bind();
-	/*setLightModelViewProjectionMatrix();
+    g_render_depth->Bind();
+	setLightModelViewProjectionMatrix();
     glUseProgram(g_depth_program->GetID());
     glBindVertexArray(g_depth_VAO);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glEnableVertexAttribArray(teapot_vertex_position_location);
-    glDrawArrays(GL_TRIANGLES, 0, g_mesh->NF() * 3);*/
-   // g_render_depth->Unbind();
+    glDrawArrays(GL_TRIANGLES, 0, g_mesh->NF() * 3);
+    g_render_depth->Unbind();
 
     //render the scene
     glUseProgram(g_plane_program->GetID());
@@ -297,11 +297,11 @@ void onDisplay(){
 
 
 void cursor_position_callback(GLFWwindow *window, double xpos, double ypos){
-    /*if(g_plane_angle_record){
+    if(g_plane_angle_record){
         Matrix4<float> rz;
-        rz.SetRotation(Point3f(1, 0, 0), ypos - g_plane_angle_record_coord.y);
+        rz.SetRotation(Point3f(1, 0, 0), (ypos - g_plane_angle_record_coord.y) * 3.14 / 180);
         Matrix4<float> rx;
-        rx.SetRotation(Point3f(0, 1, 0), xpos - g_plane_angle_record_coord.x);
+        rx.SetRotation(Point3f(0, 1, 0), (xpos - g_plane_angle_record_coord.x) * 3.14 / 180);
         g_plane_mouse_rotation_matrix = rx * rz;
     }
     if(g_plane_dist_record){
@@ -309,9 +309,9 @@ void cursor_position_callback(GLFWwindow *window, double xpos, double ypos){
     }
     if(g_teapot_angle_record){
         Matrix4<float> rz;
-        rz.SetRotation(Point3f(1, 0, 0), ypos - g_teapot_angle_record_coord.y);
+        rz.SetRotation(Point3f(1, 0, 0), (ypos - g_teapot_angle_record_coord.y) * 3.14 / 180);
         Matrix4<float> rx;
-        rx.SetRotation(Point3f(0, 1, 0), xpos - g_teapot_angle_record_coord.x);
+        rx.SetRotation(Point3f(0, 1, 0), (xpos - g_teapot_angle_record_coord.x) * 3.14 / 180);
         g_teapot_mouse_rotation_matrix = rx * rz;
    }
     if(g_teapot_dist_record){
@@ -322,13 +322,13 @@ void cursor_position_callback(GLFWwindow *window, double xpos, double ypos){
         g_light_record_coord.y = ypos;
     }
     setPlaneModelViewProjectionMatrix();
-    setTeapotModelViewProjectionMatrix();*/
+    setTeapotModelViewProjectionMatrix();
 }
 
 void mouse_button_callback(GLFWwindow *window,int button, int action, int mods){
     double xpos, ypos;
     glfwGetCursorPos(g_window, &xpos, &ypos);
-    /*if(button == GLFW_MOUSE_BUTTON_RIGHT){
+    if(button == GLFW_MOUSE_BUTTON_RIGHT){
         if(mods == GLFW_MOD_ALT){
             if(action == GLFW_PRESS){
                 if(!g_plane_angle_record){
@@ -380,7 +380,7 @@ void mouse_button_callback(GLFWwindow *window,int button, int action, int mods){
         }
     }
     setPlaneModelViewProjectionMatrix();
-    setTeapotModelViewProjectionMatrix();*/
+    setTeapotModelViewProjectionMatrix();
 }
 
 static void error_callback(int error, const char* description){
@@ -442,8 +442,9 @@ inline void renderPlane(){
     setupPlaneBuffers();
 
 	//depth texture
-	//GLint texLoc = glGetUniformLocation(g_plane_program->GetID(), "map_Shadow");
-	//glUniform1i(texLoc, g_render_depth->GetTextureID());
+	g_render_depth->BindTexture(0);
+	GLint texLoc = glGetUniformLocation(g_plane_program->GetID(), "map_Shadow");
+	glUniform1i(texLoc, g_render_depth->GetTextureID());
 }
 
 inline void renderTeapot() {
@@ -464,9 +465,11 @@ inline void renderTeapot() {
 
 	setTeapotModelViewProjectionMatrix();
 	setupTeapotBuffers();
-
-	//GLint texLoc = glGetUniformLocation(g_teapot_program->GetID(), "map_Shadow");
-	//glUniform1i(texLoc, g_render_depth->GetTextureID());
+	
+	//depth texture
+	g_render_depth->BindTexture(1);
+	GLint texLoc = glGetUniformLocation(g_teapot_program->GetID(), "map_Shadow");
+	glUniform1i(texLoc, g_render_depth->GetTextureID());
 }
 
 int main(int argc, char *argv[]){
@@ -516,15 +519,15 @@ int main(int argc, char *argv[]){
         exit(EXIT_FAILURE);
     }
     glfwSetKeyCallback(g_window, key_callback);
-    //glfwSetCursorPosCallback(g_window, cursor_position_callback);
-    //glfwSetMouseButtonCallback(g_window, mouse_button_callback);
+    glfwSetCursorPosCallback(g_window, cursor_position_callback);
+    glfwSetMouseButtonCallback(g_window, mouse_button_callback);
     glfwMakeContextCurrent(g_window);
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
     glfwSwapInterval(1);
 
-	//g_render_depth = new GLRenderDepth2D();
-	//bindDepthTexture();
-	//renderDepth();
+	g_render_depth = new GLRenderDepth2D();
+	bindDepthTexture();
+	renderDepth();
 	renderPlane();
 	renderTeapot();
 
