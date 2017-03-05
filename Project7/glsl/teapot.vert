@@ -11,6 +11,7 @@ uniform mat4 modelViewProjection;
 uniform mat4 modelView;
 uniform mat4 normalTransform;
 uniform mat4 lightModelViewProjection;
+uniform mat4 lightRotation;
 
 void main(){
     gl_Position = modelViewProjection * vec4(pos, 1.0);
@@ -26,6 +27,6 @@ void main(){
 	
 	const vec3 lightPosition = vec3(20, 40, 20);
 	vec4 lightDir4 = vec4(lightPosition - pos, 0.0);
-	lightDir4 = modelView * lightDir4;
+	lightDir4 = modelView * lightRotation * lightDir4;
 	lightDir = normalize(lightDir4).xyz;
 }

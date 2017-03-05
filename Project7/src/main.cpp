@@ -41,7 +41,7 @@ Point3f g_centerV(0, 0, 0);
 Point3f g = Point3f(0.0, 0.0, -1.0); // gaze direction
 Point3f e = Point3f(0.0, 0.0, 0.0); // eye position
 Point3f t = Point3f(0.0, 1.0, 0.0); // view up direction
-Point3f g_light_position(20, 30, 20);
+Point3f g_light_position(20, 40, 20);
 
 float g_teapot_dist;
 float g_plane_dist = 6.0;
@@ -92,7 +92,17 @@ GLuint g_depth_VAO;
 TriMesh::Mtl g_mtl;
 ////////////////////////////////////////////////////////////////////////////////
 void setLightModelViewProjectionMatrix() {
+	Matrix4<float> rz;
+	rz.SetRotation(Point3f(0, 0, 1), g_light_record_coord.y * 3.14 / 180);
+	Matrix4<float> rx;
+	rx.SetRotation(Point3f(0, 1, 0), g_light_record_coord.x * 3.14 / 180);
+	g_light_rotation_matrix = rx * rz;
+	g_light_position = Point3f(20, 40, 20);
+	Point4f temp4 = g_light_rotation_matrix * Point4f(g_light_position[0], g_light_position[1], g_light_position[2], 1);
+	g_light_position = Point3f(temp4[0] / temp4[3], temp4[1] / temp4[3], temp4[2] / temp4[3]);
+
 	e = g_light_position;
+	//printf("e = (%f %f %f)\n", e.x, e.y, e.z);
 	g = g_centerV-e;
 	Point3f w = -g / g.Length();
 	Point3f u = t.Cross(w) / (t.Cross(w)).Length();
@@ -133,17 +143,12 @@ void setTeapotModelViewProjectionMatrix() {
 	g_teapot_normal_transform_matrix = temp.GetTranspose();
 	g_teapot_model_view_projection_matrix = g_teapot_projection_matrix * g_teapot_view_matrix * g_teapot_model_matrix;
 
-	Matrix4<float> rz;
-	rz.SetRotation(Point3f(0, 0, 1), g_light_record_coord.y);
-	Matrix4<float> rx;
-	rx.SetRotation(Point3f(0, 1, 0), g_light_record_coord.x);
-	g_light_rotation_matrix = rx * rz;
-
 	glUseProgram(g_teapot_program->GetID());
 	g_teapot_program->SetUniformMatrix4(0, g_teapot_model_view_projection_matrix.data);
 	g_teapot_program->SetUniformMatrix4(1, g_teapot_normal_transform_matrix.data);
 	g_teapot_program->SetUniformMatrix4(2, g_teapot_model_view_matrix.data);
 	g_teapot_program->SetUniformMatrix4(3, g_light_model_view_projection_matrix.data);
+	g_teapot_program->SetUniformMatrix4(4, g_light_rotation_matrix.data);
 
 }
 
@@ -164,13 +169,14 @@ void setPlaneModelViewProjectionMatrix(){
     g_plane_model_view_matrix = g_plane_view_matrix * g_plane_model_matrix;
 	Matrix4<float> temp = g_plane_model_view_matrix.GetInverse();
 	g_plane_normal_transform_matrix = temp.GetTranspose();
-    g_plane_model_view_projection_matrix = g_plane_projection_matrix * g_plane_view_matrix * g_plane_model_matrix;
+    g_plane_model_view_projection_matrix = g_plane_projection_matrix * g_plane_view_matrix * g_plane_model_matrix * g_teapot_model_matrix;
 
     glUseProgram(g_plane_program->GetID());
     g_plane_program->SetUniformMatrix4(0, g_plane_model_view_projection_matrix.data);
     g_plane_program->SetUniformMatrix4(1, g_plane_normal_transform_matrix.data);
     g_plane_program->SetUniformMatrix4(2, g_plane_model_view_matrix.data);
 	g_plane_program->SetUniformMatrix4(3, g_light_model_view_projection_matrix.data);
+	g_plane_program->SetUniformMatrix4(4, g_light_rotation_matrix.data);
 }
 
 void setupPlaneBuffers(){
@@ -437,6 +443,7 @@ inline void renderPlane(){
 	g_plane_program->RegisterUniform(1, "normalTransform");
 	g_plane_program->RegisterUniform(2, "modelView");
 	g_plane_program->RegisterUniform(3, "lightModelViewProjection");
+	g_plane_program->RegisterUniform(4, "lightRotation");
     g_plane_program->Bind();
     plane_vertex_position_location = glGetAttribLocation(g_plane_program->GetID(), "pos");
     plane_vertex_normal_location = glGetAttribLocation(g_plane_program->GetID(), "inputNormal");
@@ -461,6 +468,7 @@ inline void renderTeapot() {
 	g_teapot_program->RegisterUniform(1, "normalTransform");
 	g_teapot_program->RegisterUniform(2, "modelView");
 	g_teapot_program->RegisterUniform(3, "lightModelViewProjection");
+	g_teapot_program->RegisterUniform(4, "lightRotation");
 
 	g_teapot_program->Bind();
 	teapot_vertex_position_location = glGetAttribLocation(g_teapot_program->GetID(), "pos");
