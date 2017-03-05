@@ -18,14 +18,14 @@ void main(){
     vertPos = vec3(vertPos4) / vertPos4.w;
     normalInterp = (normalTransform * vec4(inputNormal, 0.0)).xyz;
 	
-	mat4 Ms = mat4(vec4(0.495, 0, 0, 0),
-					vec4(0, 0.495, 0, 0),
-					vec4(0, 0, 0.495, 0),
-					vec4(0.5, 0.5, 0.495, 1));
+	mat4 Ms = mat4(vec4(0.5, 0, 0, 0),
+					vec4(0, 0.5, 0, 0),
+					vec4(0, 0, 0.5, 0),
+					vec4(0.5, 0.5, 0.5, 1));
 	shadowCoord = Ms * lightModelViewProjection * vec4(pos, 1.0);
 	
-	const vec3 lightPosition = vec3(20, 30, 20);
+	const vec3 lightPosition = vec3(20, 40, 20);
 	vec4 lightDir4 = vec4(lightPosition - pos, 0.0);
 	lightDir4 = modelView * lightDir4;
-	lightDir = normalize(lightDir4.xyz);
+	lightDir = normalize(lightDir4).xyz;
 }

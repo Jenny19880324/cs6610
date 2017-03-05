@@ -101,12 +101,12 @@ void setLightModelViewProjectionMatrix() {
 	g_light_view_matrix.Set(u, v, w, e);
 	g_light_view_matrix.Invert();
 	g_light_model_matrix.SetIdentity();
-	g_light_model_matrix = g_light_mouse_rotation_matrix * g_light_model_matrix;
+	//g_light_model_matrix = g_teapot_mouse_rotation_matrix * g_light_model_matrix;
 	float aspect = (float)g_screen_width / (float)g_screen_height;
 	g_light_projection_matrix.SetIdentity();
-	g_light_projection_matrix.SetPerspective(PI / 3, aspect, 100, 0);
+	g_light_projection_matrix.SetPerspective(PI / 3, aspect, 20, -20);
 	g_light_model_view_matrix = g_light_view_matrix * g_light_model_matrix;
-	g_light_model_view_projection_matrix = g_light_projection_matrix * g_light_view_matrix * g_light_model_matrix;
+	g_light_model_view_projection_matrix = g_light_projection_matrix * g_light_view_matrix * g_light_model_matrix *  g_teapot_mouse_rotation_matrix;
 
 	glUseProgram(g_depth_program->GetID());
 
@@ -115,7 +115,7 @@ void setLightModelViewProjectionMatrix() {
 
 void setTeapotModelViewProjectionMatrix() {
 	//transformation
-	e = Point3f(-10.0, 20.0, -60.0);
+	e = Point3f(-40.0, 40.0, 0.0);
 	g = g_centerV - e;
 	Point3f w = -g / g.Length();
 	Point3f u = t.Cross(w) / (t.Cross(w)).Length();
@@ -125,6 +125,7 @@ void setTeapotModelViewProjectionMatrix() {
 	g_teapot_view_matrix.Invert();
 	g_teapot_model_matrix.SetIdentity();
 	g_teapot_model_matrix = g_teapot_mouse_rotation_matrix * g_teapot_model_matrix;
+	//g_teapot_model_matrix = g_teapot_mouse_rotation_matrix * g_teapot_model_matrix;
 	float aspect = (float)g_screen_width / (float)g_screen_height;
 	g_teapot_projection_matrix.SetPerspective(PI / 3, aspect, 20, -20);
 	g_teapot_model_view_matrix = g_teapot_view_matrix * g_teapot_model_matrix;
@@ -147,7 +148,7 @@ void setTeapotModelViewProjectionMatrix() {
 }
 
 void setPlaneModelViewProjectionMatrix(){
-    e = Point3f(-10.0, 20.0, -60);
+    e = Point3f(-40.0, 40.0, 0);
     g = g_centerV - e;
     Point3f w = -g / g.Length();
     Point3f u = t.Cross(w) / (t.Cross(w)).Length();
@@ -321,6 +322,7 @@ void cursor_position_callback(GLFWwindow *window, double xpos, double ypos){
         g_light_record_coord.x = xpos;
         g_light_record_coord.y = ypos;
     }
+	setLightModelViewProjectionMatrix();
     setPlaneModelViewProjectionMatrix();
     setTeapotModelViewProjectionMatrix();
 }
@@ -379,6 +381,7 @@ void mouse_button_callback(GLFWwindow *window,int button, int action, int mods){
             g_teapot_dist_record = false;
         }
     }
+	setLightModelViewProjectionMatrix();
     setPlaneModelViewProjectionMatrix();
     setTeapotModelViewProjectionMatrix();
 }
