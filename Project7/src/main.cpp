@@ -24,11 +24,12 @@ using namespace cy;
 //GLOBAL VARIABLE
 ////////////////////////////////////////////////////////////////////////////////
 TriMesh *g_mesh;
-TriMesh *g_cube;
+TriMesh *g_light;
 GLFWwindow *g_window;
 GLSLProgram *g_teapot_program;
 GLSLProgram *g_plane_program;
 GLSLProgram *g_depth_program;
+GLSLProgram *g_light_program;
 GLRenderDepth<GL_TEXTURE_2D> *g_render_depth;
 int g_screen_width = 800;
 int g_screen_height = 600;
@@ -85,9 +86,12 @@ GLint teapot_vertex_position_location;
 GLint teapot_vertex_normal_location;
 GLint plane_vertex_normal_location;
 GLint plane_vertex_position_location;
+GLint light_vertex_position_location;
+GLint light_vertex_normal_location;
 GLuint g_teapot_VAO;
 GLuint g_plane_VAO;
 GLuint g_depth_VAO;
+GLuint g_light_VAO;
 
 TriMesh::Mtl g_mtl;
 ////////////////////////////////////////////////////////////////////////////////
@@ -149,34 +153,56 @@ void setTeapotModelViewProjectionMatrix() {
 	g_teapot_program->SetUniformMatrix4(2, g_teapot_model_view_matrix.data);
 	g_teapot_program->SetUniformMatrix4(3, g_light_model_view_projection_matrix.data);
 	g_teapot_program->SetUniformMatrix4(4, g_light_rotation_matrix.data);
-
 }
 
-void setPlaneModelViewProjectionMatrix(){
-    e = Point3f(-40.0, 40.0, 0);
-    g = g_centerV - e;
-    Point3f w = -g / g.Length();
-    Point3f u = t.Cross(w) / (t.Cross(w)).Length();
-    Point3f v = w.Cross(u);
+void setPlaneModelViewProjectionMatrix() {
+	e = Point3f(-40.0, 40.0, 0);
+	g = g_centerV - e;
+	Point3f w = -g / g.Length();
+	Point3f u = t.Cross(w) / (t.Cross(w)).Length();
+	Point3f v = w.Cross(u);
 
-    g_plane_view_matrix.Set(u, v, w, e);
-    g_plane_view_matrix.Invert();
-    g_plane_model_matrix.SetIdentity();
-    g_plane_model_matrix = g_plane_mouse_rotation_matrix * g_plane_model_matrix;
-    float aspect = (float)g_screen_width/(float)g_screen_height;
-    g_plane_projection_matrix.SetIdentity();
-    g_plane_projection_matrix.SetPerspective(PI/3, aspect, 20, -20);
-    g_plane_model_view_matrix = g_plane_view_matrix * g_plane_model_matrix;
+	g_plane_view_matrix.Set(u, v, w, e);
+	g_plane_view_matrix.Invert();
+	g_plane_model_matrix.SetIdentity();
+	g_plane_model_matrix = g_plane_mouse_rotation_matrix * g_plane_model_matrix;
+	float aspect = (float)g_screen_width / (float)g_screen_height;
+	g_plane_projection_matrix.SetIdentity();
+	g_plane_projection_matrix.SetPerspective(PI / 3, aspect, 20, -20);
+	g_plane_model_view_matrix = g_plane_view_matrix * g_plane_model_matrix;
 	Matrix4<float> temp = g_plane_model_view_matrix.GetInverse();
 	g_plane_normal_transform_matrix = temp.GetTranspose();
-    g_plane_model_view_projection_matrix = g_plane_projection_matrix * g_plane_view_matrix * g_plane_model_matrix * g_teapot_model_matrix;
+	g_plane_model_view_projection_matrix = g_plane_projection_matrix * g_plane_view_matrix * g_plane_model_matrix * g_teapot_model_matrix;
 
-    glUseProgram(g_plane_program->GetID());
-    g_plane_program->SetUniformMatrix4(0, g_plane_model_view_projection_matrix.data);
-    g_plane_program->SetUniformMatrix4(1, g_plane_normal_transform_matrix.data);
-    g_plane_program->SetUniformMatrix4(2, g_plane_model_view_matrix.data);
+	glUseProgram(g_plane_program->GetID());
+	g_plane_program->SetUniformMatrix4(0, g_plane_model_view_projection_matrix.data);
+	g_plane_program->SetUniformMatrix4(1, g_plane_normal_transform_matrix.data);
+	g_plane_program->SetUniformMatrix4(2, g_plane_model_view_matrix.data);
 	g_plane_program->SetUniformMatrix4(3, g_light_model_view_projection_matrix.data);
 	g_plane_program->SetUniformMatrix4(4, g_light_rotation_matrix.data);
+}
+
+void setLightObjModelViewProjectionMatrix() {
+	e = Point3f(-40.0, 40.0, 0);
+	g = g_centerV - e;
+	Point3f w = -g / g.Length();
+	Point3f u = t.Cross(w) / (t.Cross(w)).Length();
+	Point3f v = w.Cross(u);
+
+	g_plane_view_matrix.Set(u, v, w, e);
+	g_plane_view_matrix.Invert();
+	g_plane_model_matrix.SetIdentity();
+	g_plane_model_matrix = g_plane_mouse_rotation_matrix * g_plane_model_matrix;
+	float aspect = (float)g_screen_width / (float)g_screen_height;
+	g_plane_projection_matrix.SetIdentity();
+	g_plane_projection_matrix.SetPerspective(PI / 3, aspect, 20, -20);
+	g_plane_model_view_matrix = g_plane_view_matrix * g_plane_model_matrix;
+	Matrix4<float> temp = g_plane_model_view_matrix.GetInverse();
+	g_plane_normal_transform_matrix = temp.GetTranspose();
+	g_plane_model_view_projection_matrix = g_plane_projection_matrix * g_plane_view_matrix * g_plane_model_matrix * g_teapot_model_matrix;
+	glUseProgram(g_light_program->GetID());
+	g_light_program->SetUniformMatrix4(0, g_plane_model_view_projection_matrix.data);
+	g_light_program->SetUniformMatrix4(1, g_light_rotation_matrix.data);
 }
 
 void setupPlaneBuffers(){
@@ -252,6 +278,43 @@ void setupTeapotBuffers() {
 	glVertexAttribPointer(teapot_vertex_normal_location, 3, GL_FLOAT, GL_FALSE, 0, 0);
 }
 
+void setupLightBuffers() {
+	g_light = new TriMesh();
+	if (!g_light->LoadFromFileObj("../light.obj", true)) {
+		cerr << "failure of loading the obj file" << endl;
+	}
+	Point3f *vertex_data = (Point3f *)malloc(sizeof(Point3f) * g_light->NF() * 3);
+	Point3f *normal_data = (Point3f *)malloc(sizeof(Point3f) * g_light->NF() * 3);
+	for (int i = 0; i < g_light->NF(); i++) {
+		vertex_data[i * 3 + 0] = g_light->V(g_light->F(i).v[0]);
+		vertex_data[i * 3 + 1] = g_light->V(g_light->F(i).v[1]);
+		vertex_data[i * 3 + 2] = g_light->V(g_light->F(i).v[2]);
+
+		normal_data[i * 3 + 0] = g_light->VN(g_light->FN(i).v[0]);
+		normal_data[i * 3 + 1] = g_light->VN(g_light->FN(i).v[1]);
+		normal_data[i * 3 + 2] = g_light->VN(g_light->FN(i).v[2]);
+	}
+
+	//Generate a vertex buffer
+	//and set its data using the vertices read from .obj file
+	GLuint vertex_position_buffer;
+	glGenBuffers(1, &vertex_position_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Point3f) * g_light->NF() * 3, vertex_data, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(light_vertex_position_location);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_position_buffer);
+	glVertexAttribPointer(light_vertex_position_location, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	//Generate a normal buffer
+	GLuint vertex_normal_buffer;
+	glGenBuffers(1, &vertex_normal_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Point3f) * g_light->NF() * 3, vertex_data, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(light_vertex_normal_location);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_normal_buffer);
+	glVertexAttribPointer(light_vertex_normal_location, 3, GL_FLOAT, GL_FALSE, 0, 0);
+}
+
 void setupDepthBuffers() {
 	Point3f *vertex_data = (Point3f *)malloc(sizeof(Point3f) * g_mesh->NF() * 3);
 	for (int i = 0; i < g_mesh->NF(); i++) {
@@ -298,6 +361,12 @@ void onDisplay(){
     glEnableVertexAttribArray(teapot_vertex_normal_location);
     glDrawArrays(GL_TRIANGLES, 0, g_mesh->NF() * 3);
 
+	glUseProgram(g_light_program->GetID());
+	glBindVertexArray(g_light_VAO);
+	glEnableVertexAttribArray(light_vertex_position_location);
+	glEnableVertexAttribArray(light_vertex_normal_location);
+	glDrawArrays(GL_TRIANGLES, 0, g_light->NF() * 3);
+
     glfwSwapBuffers(g_window);
 }
 
@@ -331,6 +400,7 @@ void cursor_position_callback(GLFWwindow *window, double xpos, double ypos){
 	setLightModelViewProjectionMatrix();
     setPlaneModelViewProjectionMatrix();
     setTeapotModelViewProjectionMatrix();
+	setLightObjModelViewProjectionMatrix();
 }
 
 void mouse_button_callback(GLFWwindow *window,int button, int action, int mods){
@@ -390,6 +460,7 @@ void mouse_button_callback(GLFWwindow *window,int button, int action, int mods){
 	setLightModelViewProjectionMatrix();
     setPlaneModelViewProjectionMatrix();
     setTeapotModelViewProjectionMatrix();
+	setLightObjModelViewProjectionMatrix();
 }
 
 static void error_callback(int error, const char* description){
@@ -483,6 +554,22 @@ inline void renderTeapot() {
 	glUniform1i(texLoc, g_render_depth->GetTextureID());
 }
 
+inline void renderLight() {
+	//Generate and bind a vertex array object
+	glGenVertexArrays(1, &g_light_VAO);
+	glBindVertexArray(g_light_VAO);
+
+	g_light_program->BuildFiles("../glsl/light.vert", "../glsl/light.frag");
+	g_light_program->RegisterUniform(0, "modelViewProjection");
+	g_light_program->RegisterUniform(1, "lightRotation");
+
+	g_light_program->Bind();
+	light_vertex_position_location = glGetAttribLocation(g_teapot_program->GetID(), "pos");
+
+	setLightObjModelViewProjectionMatrix();
+	setupLightBuffers();
+}
+
 int main(int argc, char *argv[]){
     //reading and parsing of the obj file
     string obj_filename;
@@ -537,10 +624,12 @@ int main(int argc, char *argv[]){
     glfwSwapInterval(1);
 
 	g_render_depth = new GLRenderDepth2D();
+	g_light_program = new GLSLProgram();
 	bindDepthTexture();
 	renderDepth();
 	renderPlane();
 	renderTeapot();
+	renderLight();
 
     glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(g_window)){

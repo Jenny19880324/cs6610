@@ -1,14 +1,9 @@
 What I have implemented
-	GLRenderbuffer as a texture to a plane.
-        left mouse button (and drag) should adjust the camera angles,
-        and right mouse button (and drag) should adjust the camera distance, 
-        used for rendering the object to the texture
-        Alt key + left and right mouse buttons (and drag) should control 
-        the same view parameters for rendering the plane
+	 shadows from a spot light onto the plane and the object
+        right mouse button (and drag) should adjust the camera angles,
+        CTRL key + left mouse buttons (and drag) control the position of light
 
-       rendered texture should use bilinear filtering for magnification and 
-        mip-mapping with anisotropic filtering for minification
-
+        light position displayed
 What I could not implemented
 	None
 
@@ -25,7 +20,7 @@ OSX Yosemite
     and the include is in /usr/local/include/GLFW
 3. make a build folder in Project5 folder, cd to the build folder and type cmake..
 then type make
-then type ./EnvironmentMapping ../teapot/teapot.obj
+then type ./EnvironmentMapping ../teapot.obj
 
 Windows10
 1. Make sure you have Visual Studio 2015
@@ -38,7 +33,7 @@ Windows10
 3. make a build foder in Project5, cd to the build folder and type cmake .. -G "Visual Studio 14 Win64"
 4. Open EnvironmentMapping.sln in the build folder using VS2015
 5. Set Shading as start project
-6. In project properties -> Debugging set Command Arguments to "../teapot/teapot.obj"
+6. In project properties -> Debugging set Command Arguments to "../teapot.obj"
 7. Build EnvironmentMapping
 8. run EnvironmentMapping from VS
 
